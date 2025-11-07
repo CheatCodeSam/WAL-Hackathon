@@ -44,5 +44,5 @@ yarn-error.log*
 
 # idea files
 .idea
-*.tfstate
+*.tfstate*
 .terraform
