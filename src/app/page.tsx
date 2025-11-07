@@ -11,7 +11,7 @@ export default async function Home() {
   return (
     <HydrateClient>
       <main>
-        Hello, World!
+        Fundsui! Funds for <b>u</b> and <b>i</b>!
       </main>
     </HydrateClient>
   );
