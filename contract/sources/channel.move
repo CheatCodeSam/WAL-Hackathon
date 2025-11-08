@@ -1,10 +1,18 @@
 module podcast::channel;
 
+use podcast::podcast::Podcast;
 use std::string::String;
+use sui::dynamic_field as df;
 
 // ==== Errors ====
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
+
+#[error]
+const EPodcastAlreadyPublished: vector<u8> = b"Podcast already published";
+
+#[error]
+const EPodcastDoesNotExist: vector<u8> = b"Podcast does not exist";
 
 public struct Channel has key, store {
     id: UID,
@@ -141,4 +149,76 @@ public fun subscrption_duration(channel: &Channel): u64 {
 
 public fun is_free(channel: &Channel): bool {
     channel.subscrption_price == 0
+}
+
+// ===== Podcast Management =====
+public fun add_episode(
+    channel: &mut Channel,
+    podcast_id: ID,
+    name: String,
+    duration: u64,
+    blob_id: String,
+    file_type: String,
+    channel_cap: &ChannelCap,
+) {
+    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
+    assert!(df::exists_(&channel.id, podcast_id), EPodcastDoesNotExist);
+
+    let podcast: &mut Podcast = df::borrow_mut(&mut channel.id, podcast_id);
+
+    podcast.add(name, duration, blob_id, file_type);
+}
+
+public fun pop_episode(channel: &mut Channel, podcast_id: ID, channel_cap: &ChannelCap) {
+    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
+    assert!(df::exists_(&channel.id, podcast_id), EPodcastDoesNotExist);
+
+    let podcast: &mut Podcast = df::borrow_mut(&mut channel.id, podcast_id);
+
+    podcast.pop_back();
+}
+
+public fun destory_episode(channel: &mut Channel, podcast_id: ID, channel_cap: &ChannelCap) {
+    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
+    assert!(df::exists_(&channel.id, podcast_id), EPodcastDoesNotExist);
+
+    let podcast: Podcast = df::remove(&mut channel.id, podcast_id);
+
+    podcast.destroy();
+}
+
+// Publish podcast to channel
+public fun publish_podcast(podcast: Podcast, channel: &mut Channel, channel_cap: &ChannelCap) {
+    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
+    assert!(df::exists_(&channel.id, podcast.id()), EPodcastAlreadyPublished);
+
+    df::add(
+        &mut channel.id,
+        podcast.id(),
+        podcast,
+    );
+
+    channel.increment_number_of_podcasts();
+
+    // Todo: emit PodcastPublished
+}
+
+// Unpublish podcast from channel
+public fun publish_podcast(
+    podcast: Podcast,
+    channel: &mut Channel,
+    channel_cap: &ChannelCap,
+): Podcast {
+    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
+    assert!(df::exists_(&channel.id, podcast.id()), EPodcastAlreadyPublished);
+
+    let podcast = df::remove(
+        &mut channel.id,
+        podcast.id(),
+    );
+
+    channel.decrement_number_of_podcasts();
+    podcast
+
+    // Todo: emit PodcastPublished
 }

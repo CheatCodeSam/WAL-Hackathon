@@ -1,11 +1,7 @@
 module podcast::podcast;
 
-use podcast::channel::{Channel, ChannelCap};
 use podcast::episode::{Self, Episode};
 use std::string::String;
-
-#[error]
-const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 
 public struct Podcast has key, store {
     id: UID,
@@ -14,18 +10,11 @@ public struct Podcast has key, store {
     duration: u64,
     episodes: vector<Episode>,
     tags: vector<String>, // For automatic recomendations
-    channel: ID,
     nouce: String, // Unique string for decryption
-    is_free: bool
+    is_free: bool,
 }
 
-public fun new(
-    title: String,
-    image_blob: String,
-    nouce: String,
-    channel_cap: &ChannelCap,
-    ctx: &mut TxContext,
-): Podcast {
+public fun new(title: String, image_blob: String, nouce: String, ctx: &mut TxContext): Podcast {
     let podcast = Podcast {
         id: object::new(ctx),
         title,
@@ -33,7 +22,6 @@ public fun new(
         duration: 0,
         episodes: vector<Episode>[],
         tags: vector<String>[],
-        channel: channel_cap.channel(),
         is_free: true,
         nouce,
     };
@@ -42,52 +30,38 @@ public fun new(
 }
 
 public fun add(
-    channel: &mut Channel,
     podcast: &mut Podcast,
     name: String,
     duration: u64,
     blob_id: String,
     file_type: String,
-    channel_cap: &ChannelCap,
 ) {
-    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
-    assert!(podcast.channel == channel_cap.channel(), EUnauthorizedAccess);
-
     let episode = episode::new(name, duration, blob_id, file_type);
 
     podcast.increament_duration(duration);
     podcast.episodes.push_back(episode);
-    channel.increment_number_of_podcasts();
+
+    // Todo: Episode Added
 }
 
 /// remove last podcast
-public fun pop_back(channel: &mut Channel, podcast: &mut Podcast, channel_cap: &ChannelCap) {
-    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
-    assert!(podcast.channel == channel_cap.channel(), EUnauthorizedAccess);
-
+public fun pop_back(podcast: &mut Podcast) {
     let episode = podcast.episodes.pop_back();
 
     let duration = episode.duration();
     episode.destroy();
     podcast.decreament_duration(duration);
-    channel.decrement_number_of_podcasts();
+
+    // Todo: Episode Popped
 }
 
-/// Publish podcast to the public
-#[allow(lint(share_owned))]
-public fun publish(podcast: Podcast) {
-    // Todo: emit PodcastPublished
-    transfer::public_share_object(podcast);
-}
-
-public fun destroy(podcast: Podcast, channel_cap: &ChannelCap) {
-    let Podcast { id, channel, episodes, .. } = podcast;
-
-    assert!(channel == channel_cap.channel(), 0); // Only channel can destory podcast
+public fun destroy(podcast: Podcast) {
+    let Podcast { id, episodes, .. } = podcast;
 
     id.delete();
 
     destroy_episodes(episodes);
+    // Todo: Podcast Destroy
 }
 
 fun destroy_episodes(mut episodes: vector<Episode>) {
@@ -112,20 +86,19 @@ fun increament_duration(podcast: &mut Podcast, duration: u64) {
 }
 
 fun decreament_duration(podcast: &mut Podcast, duration: u64) {
-    if (podcast.duration >= duration){
+    if (podcast.duration >= duration) {
         podcast.duration = podcast.duration - duration;
     } else {
         podcast.duration = 0;
     };
 }
 
-
 /// handles cleaning up blob storage
 #[allow(unused_variable)]
 fun cleanup_blob(blob_id: String) {}
 
-public fun channel(podcast: &Podcast): ID {
-    podcast.channel
+public fun id(podcast: &Podcast): ID {
+    object::id(podcast)
 }
 
 public fun nouce(podcast: &Podcast): String {
