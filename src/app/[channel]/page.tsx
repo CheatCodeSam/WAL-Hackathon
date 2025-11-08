@@ -1,9 +1,10 @@
 "use client"
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { IoShareSocialOutline, IoEllipsisHorizontal } from 'react-icons/io5';
 import { RiUserFollowLine, RiUserUnfollowLine } from 'react-icons/ri';
 import { BsCast } from 'react-icons/bs';
 import Link from 'next/link';
+import { api } from '~/trpc/react';
 
 interface PodcastData {
   id: string;
@@ -24,52 +25,45 @@ interface ChannelData {
   totalEpisodes: number;
 }
 
-export default function Channel() {
+interface PageProps {
+  params: Promise<{
+    channel: string;
+  }>;
+}
+
+export default function Channel({ params }: PageProps) {
+  // Unwrap the params Promise using React's use() hook
+  const { channel: channelId } = use(params);
+  
   const [isFollowing, setIsFollowing] = useState(false);
 
-  // Mock channel data
-  const channel: ChannelData = {
-    id: '1',
-    name: 'Tech Insights Network',
-    bio: 'Exploring the future of technology through in-depth conversations with industry leaders, innovators, and visionaries. Join us as we uncover the latest trends and breakthrough innovations shaping our digital world.',
-    profileImage: 'https://picsum.photos/200?random=1',
-    coverImage: 'https://picsum.photos/1200/400?random=2',
-    memberCount: 15420,
-    podcastCount: 4,
-    totalEpisodes: 156,
-  };
+  // Fetch channel and podcasts from tRPC
+  const { data: channel, isLoading: isLoadingChannel } = api.podcast.channel.byId.useQuery(channelId);
+  const { data: podcasts, isLoading: isLoadingPodcasts } = api.podcast.podcast.listFromChannel.useQuery(channelId);
 
-  // Mock podcasts data
-  const podcasts: PodcastData[] = [
-    {
-      id: '1',
-      title: 'Future of AI',
-      coverImage: 'https://picsum.photos/400?random=3',
-      episodeCount: 45,
-      lastUpdated: '2025-11-01',
-    },
-    {
-      id: '2',
-      title: 'Blockchain Revolution',
-      coverImage: 'https://picsum.photos/400?random=4',
-      episodeCount: 32,
-      lastUpdated: '2025-10-28',
-    },
-    {
-      id: '3',
-      title: 'Cloud Computing Today',
-      coverImage: 'https://picsum.photos/400?random=5',
-      episodeCount: 28,
-      lastUpdated: '2025-10-15',
-    },
-    {
-      id: '4',
-      title: 'DevOps Discussions',
-      coverImage: 'https://picsum.photos/400?random=6',
-      episodeCount: 51,
-      lastUpdated: '2025-10-10',
-    },
-  ];
+  // Show loading state
+  if (isLoadingChannel || isLoadingPodcasts) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">Loading...</div>
+          <div className="text-gray-600">Fetching channel details</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (!channel || !podcasts) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">Channel not found</div>
+          <div className="text-gray-600">Unable to load channel details</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -163,7 +157,7 @@ export default function Channel() {
             {podcasts.map((podcast) => (
               <Link
                 key={podcast.id}
-                href={`/podcast/${podcast.id}`}
+                href={`/${channelId}/${podcast.id}`}
                 className="group bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
               >
                 <div className="relative aspect-square">

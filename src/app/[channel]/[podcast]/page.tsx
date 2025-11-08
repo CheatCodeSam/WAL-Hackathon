@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import {
   IoPlayCircle,
   IoPauseCircle,
@@ -13,19 +13,28 @@ import { FaCheck } from 'react-icons/fa';
 import { HiSpeakerWave } from 'react-icons/hi2';
 import { MdDevices } from 'react-icons/md';
 import Link from 'next/link';
+import { api } from '~/trpc/react';
 
-interface Episode {
-  id: number;
-  title: string;
-  artist: string;
-  duration: string;
-  isPlayed: boolean;
+
+
+interface PageProps {
+  params: Promise<{
+    channel: string;
+    podcast: string;
+  }>;
 }
 
-export default function Podcast() {
+export default function Podcast({ params }: PageProps) {
+  // Unwrap the params Promise using React's use() hook
+  const { channel, podcast } = use(params);
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const totalDuration = 3600; // 1 hour in seconds
+
+  // Fetch podcast info and episodes from tRPC
+  const { data: podcastInfo, isLoading: isLoadingInfo } = api.podcast.podcast.byId.useQuery(podcast);
+  const { data: episodes, isLoading: isLoadingEpisodes } = api.podcast.episode.listByPodcastId.useQuery(podcast);
 
   // Update progress bar when clicking on it
   const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -36,41 +45,29 @@ export default function Podcast() {
     setCurrentTime(Math.floor(percentage * totalDuration));
   };
 
-  // Mock data
-  const podcastInfo = {
-    title: 'The Future of Technology',
-    host: 'Sarah Anderson',
-    coverImage: 'https://picsum.photos/400', // Placeholder image
-    channel: "234",
-    releaseYear: 2025,
-    episodeCount: 12,
-    totalDuration: '12 hours',
-  };
+  // Show loading state
+  if (isLoadingInfo || isLoadingEpisodes) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">Loading...</div>
+          <div className="text-gray-600">Fetching podcast details</div>
+        </div>
+      </div>
+    );
+  }
 
-  const episodes: Episode[] = [
-    {
-      id: 1,
-      title: 'The Rise of Artificial Intelligence',
-      artist: 'With Guest: Dr. James Smith',
-      duration: '45:30',
-      isPlayed: true,
-    },
-    {
-      id: 2,
-      title: 'Blockchain Revolution',
-      artist: 'With Guest: Emily Chen',
-      duration: '52:15',
-      isPlayed: true,
-    },
-    {
-      id: 3,
-      title: 'Future of Remote Work',
-      artist: 'With Guest: Mark Johnson',
-      duration: '48:20',
-      isPlayed: false,
-    },
-    // Add more episodes as needed
-  ];
+  // Show error state
+  if (!podcastInfo || !episodes) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">Podcast not found</div>
+          <div className="text-gray-600">Unable to load podcast details</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
