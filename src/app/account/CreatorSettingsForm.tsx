@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
+import { useState } from "react";
 
 interface CreatorSettings {
 	bio: string;
@@ -12,14 +13,20 @@ interface CreatorSettings {
 interface CreatorSettingsFormProps {
 	initialValues?: Partial<CreatorSettings>;
 	onSubmit: (values: CreatorSettings) => void | Promise<void>;
+	onCoverPhotoUpload?: (file: File) => Promise<string>;
 	isSubmitting?: boolean;
 }
 
 export default function CreatorSettingsForm({
 	initialValues,
 	onSubmit,
+	onCoverPhotoUpload,
 	isSubmitting = false,
 }: CreatorSettingsFormProps) {
+	const [isUploading, setIsUploading] = useState(false);
+	const [uploadError, setUploadError] = useState<string | null>(null);
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
 	const form = useForm({
 		defaultValues: {
 			bio: initialValues?.bio ?? "",
@@ -32,19 +39,72 @@ export default function CreatorSettingsForm({
 		},
 	});
 
-	const handleCoverPhotoUpload = (
+	const handleCoverPhotoUpload = async (
 		e: React.ChangeEvent<HTMLInputElement>,
-		field: typeof form.state.values.coverPhoto,
 	) => {
 		const file = e.target.files?.[0];
-		if (file) {
-			// Create a URL for preview
-			const url = URL.createObjectURL(file);
-			form.setFieldValue("coverPhoto", url);
+		if (!file) return;
 
-			// You can also handle the actual upload here
-			// uploadFile(file).then(url => form.setFieldValue("coverPhoto", url));
+		// Validate file type
+		if (!file.type.startsWith("image/")) {
+			setUploadError("Please select an image file");
+			return;
 		}
+
+		// Validate file size (10MB limit)
+		if (file.size > 10 * 1024 * 1024) {
+			setUploadError("Image must be less than 10MB");
+			return;
+		}
+
+		// Create local preview immediately for better UX
+		const localPreview = URL.createObjectURL(file);
+		setPreviewUrl(localPreview);
+		setUploadError(null);
+
+		if (onCoverPhotoUpload) {
+			setIsUploading(true);
+			try {
+				// Upload to Walrus and get the URL
+				const walrusUrl = await onCoverPhotoUpload(file);
+				form.setFieldValue("coverPhoto", walrusUrl);
+				// Clean up local preview since we have the Walrus URL
+				URL.revokeObjectURL(localPreview);
+				setPreviewUrl(null);
+			} catch (error) {
+				console.error("Upload error:", error);
+				setUploadError(error instanceof Error ? error.message : "Failed to upload image");
+				// Keep the local preview on error
+			} finally {
+				setIsUploading(false);
+			}
+		} else {
+			// Fallback: just use local preview if no upload handler
+			form.setFieldValue("coverPhoto", localPreview);
+			setPreviewUrl(null);
+		}
+	};
+
+	const handleRemoveCoverPhoto = () => {
+		// Clean up any blob URLs to prevent memory leaks
+		if (previewUrl) {
+			URL.revokeObjectURL(previewUrl);
+			setPreviewUrl(null);
+		}
+		const currentUrl = form.state.values.coverPhoto;
+		if (currentUrl && currentUrl.startsWith("blob:")) {
+			URL.revokeObjectURL(currentUrl);
+		}
+		form.setFieldValue("coverPhoto", "");
+		setUploadError(null);
+	};
+
+	// Get the display URL (prefer Walrus URL, fallback to preview)
+	const getDisplayUrl = () => {
+		if (form.state.values.coverPhoto) {
+			return form.state.values.coverPhoto;
+		}
+		return previewUrl;
 	};
 
 	return (
@@ -85,57 +145,91 @@ export default function CreatorSettingsForm({
 
 				{/* Cover Photo Field */}
 				<form.Field name="coverPhoto">
-					{(field) => (
-						<div>
-							<label
-								htmlFor="coverPhoto"
-								className="block text-sm font-medium text-gray-700 mb-1"
-							>
-								Cover Photo
-							</label>
-							<div className="mt-1">
-								{field.state.value ? (
-									<div className="relative">
-										<img
-											src={field.state.value}
-											alt="Cover preview"
-											className="h-48 w-full object-cover rounded-md"
-										/>
-										<button
-											type="button"
-											onClick={() => field.handleChange("")}
-											className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-										>
-											Remove
-										</button>
-									</div>
-								) : (
-									<div className="h-48 w-full bg-gray-100 rounded-md flex items-center justify-center border-2 border-dashed border-gray-300">
-										<label
-											htmlFor="coverPhotoInput"
-											className="cursor-pointer text-blue-500 hover:text-blue-600"
-										>
-											Upload Cover Photo
-										</label>
-										<input
-											id="coverPhotoInput"
-											type="file"
-											accept="image/*"
-											className="hidden"
-											onChange={(e) =>
-												handleCoverPhotoUpload(e, field.state.value)
-											}
-										/>
+					{(field) => {
+						const displayUrl = getDisplayUrl();
+						const hasImage = displayUrl || previewUrl;
+
+						return (
+							<div>
+								<label
+									htmlFor="coverPhoto"
+									className="block text-sm font-medium text-gray-700 mb-1"
+								>
+									Cover Photo
+								</label>
+								{uploadError && (
+									<div className="mb-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+										{uploadError}
 									</div>
 								)}
+								<div className="mt-1">
+									{hasImage ? (
+										<div className="relative">
+											<img
+												src={displayUrl || ""}
+												alt="Cover preview"
+												className="h-48 w-full object-cover rounded-md"
+												onError={(e) => {
+													console.error("Image failed to load");
+													e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999'%3EError%3C/text%3E%3C/svg%3E";
+												}}
+											/>
+											{isUploading && (
+												<div className="absolute inset-0 bg-black bg-opacity-50 rounded-md flex items-center justify-center">
+													<div className="text-white text-sm font-medium">
+														Uploading to Walrus...
+													</div>
+												</div>
+											)}
+											<button
+												type="button"
+												onClick={handleRemoveCoverPhoto}
+												disabled={isUploading}
+												className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+											>
+												Remove
+											</button>
+											{field.state.value && !field.state.value.startsWith("blob:") && (
+												<div className="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+													Stored on Walrus
+												</div>
+											)}
+										</div>
+									) : (
+										<div className="h-48 w-full bg-gray-100 rounded-md flex items-center justify-center border-2 border-dashed border-gray-300">
+											<label
+												htmlFor="coverPhotoInput"
+												className={`cursor-pointer text-blue-500 hover:text-blue-600 ${
+													isUploading ? "opacity-50 cursor-not-allowed" : ""
+												}`}
+											>
+												{isUploading ? "Uploading..." : "Upload Cover Photo"}
+											</label>
+											<input
+												id="coverPhotoInput"
+												type="file"
+												accept="image/*"
+												className="hidden"
+												onChange={handleCoverPhotoUpload}
+												disabled={isUploading}
+											/>
+										</div>
+									)}
+								</div>
+								{!hasImage && (
+									<p className="mt-1 text-sm text-gray-500">
+										Recommended size: 1200x400px (max 10MB)
+										{onCoverPhotoUpload && " • Uploads to Walrus storage"}
+									</p>
+								)}
+								{hasImage && isUploading && (
+									<p className="mt-1 text-sm text-blue-600">
+										Uploading to decentralized storage...
+									</p>
+								)}
 							</div>
-							{!field.state.value && (
-								<p className="mt-1 text-sm text-gray-500">
-									Recommended size: 1200x400px
-								</p>
-							)}
-						</div>
-					)}
+						);
+					}}
 				</form.Field>
 
 				{/* Price Field */}
@@ -202,10 +296,10 @@ export default function CreatorSettingsForm({
 				<div className="flex justify-end">
 					<button
 						type="submit"
-						disabled={isSubmitting}
+						disabled={isSubmitting || isUploading}
 						className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						{isSubmitting ? "Saving..." : "Save Changes"}
+						{isSubmitting ? "Saving..." : isUploading ? "Uploading..." : "Save Changes"}
 					</button>
 				</div>
 			</form>
