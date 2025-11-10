@@ -21,6 +21,7 @@ export default function CreateChannelPage() {
 			displayName: "",
 			tagline: "",
 			description: "",
+			profilePicture: null as File | null,
 			coverPhoto: null as File | null,
 			subscriptionPrice: "",
 		},
@@ -140,6 +141,36 @@ export default function CreateChannelPage() {
 								rows={5}
 								value={field.state.value}
 							/>
+						</div>
+					)}
+				</form.Field>
+
+				<form.Field name="profilePicture">
+					{(field) => (
+						<div>
+							<label
+								className="mb-2 block font-medium text-sm"
+								htmlFor={field.name}
+							>
+								Profile Picture
+							</label>
+							<input
+								accept="image/*"
+								className="w-full rounded-md border border-gray-300 px-4 py-2 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700 file:text-sm hover:file:bg-blue-100 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+								id={field.name}
+								name={field.name}
+								onBlur={field.handleBlur}
+								onChange={(e) => {
+									const file = e.target.files?.[0] || null;
+									field.handleChange(file);
+								}}
+								type="file"
+							/>
+							{field.state.value && (
+								<p className="mt-2 text-gray-600 text-sm">
+									Selected: {field.state.value.name}
+								</p>
+							)}
 						</div>
 					)}
 				</form.Field>
