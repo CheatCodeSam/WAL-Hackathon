@@ -7,7 +7,9 @@ import {
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
+import { useState } from "react";
 import { useNetworkVariable } from "../networkConfig";
+import { uploadImage } from "~/services/walrus-utils";
 
 export default function CreateChannelPage() {
 	const account = useCurrentAccount()!;
@@ -15,6 +17,9 @@ export default function CreateChannelPage() {
 	const fundsuiRegistryId = useNetworkVariable("fundsuiChannelRegistry");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
+	
+	const [isUploading, setIsUploading] = useState(false);
+	const [uploadProgress, setUploadProgress] = useState<string>("");
 
 	const form = useForm({
 		defaultValues: {
@@ -26,43 +31,80 @@ export default function CreateChannelPage() {
 			subscriptionPrice: "",
 		},
 		onSubmit: async ({ value }) => {
-			//TODO upload cover photo uri and profile photo uri to walrus
+			try {
+				setIsUploading(true);
+				setUploadProgress("Uploading images to Walrus...");
 
-			const tx = new Transaction();
+				// Upload profile picture
+				let profilePictureUri = "Testing";
+				if (value.profilePicture) {
+					setUploadProgress("Uploading profile picture...");
+					const profileResult = await uploadImage(value.profilePicture, {
+						maxSize: 5 * 1024 * 1024, // 5MB
+						epochs: 10,
+						deletable: false,
+					});
+					profilePictureUri = profileResult.url;
+				}
 
-			const channelCap = tx.moveCall({
-				arguments: [
-					tx.object(fundsuiRegistryId),
-					tx.pure.string(value.displayName),
-					tx.pure.string(value.tagline),
-					tx.pure.string(value.description),
-					tx.pure.string("cover_photo_uri"),
-					tx.pure.string("profile_photo_uri"),
-					tx.pure.u64(10000),
-					tx.pure.u8(3),
-				],
-				target: `${fundsuiPackageId}::channel::new`,
-			});
+				// Upload cover photo
+				let coverPhotoUri = "Testing";
+				if (value.coverPhoto) {
+					setUploadProgress("Uploading cover photo...");
+					const coverResult = await uploadImage(value.coverPhoto, {
+						maxSize: 10 * 1024 * 1024, // 10MB
+						epochs: 10,
+						deletable: false,
+					});
+					coverPhotoUri = coverResult.url;
+				}
 
-			tx.transferObjects([channelCap], account.address);
+				setUploadProgress("Creating channel on blockchain...");
 
-			await mutateAsync(
-				{
-					transaction: tx,
-				},
-				{
-					onSuccess: (tx) => {
-						suiClient
-							.waitForTransaction({
-								digest: tx.digest,
-								options: { showEffects: true },
-							})
-							.then(async (result) => {
-								console.log(result);
-							});
+				const tx = new Transaction();
+
+				const channelCap = tx.moveCall({
+					arguments: [
+						tx.object(fundsuiRegistryId),
+						tx.pure.string(value.displayName),
+						tx.pure.string(value.tagline),
+						tx.pure.string(value.description),
+						tx.pure.string(coverPhotoUri || ""),
+						tx.pure.string(profilePictureUri || ""),
+						tx.pure.u64(10000),
+						tx.pure.u8(3),
+					],
+					target: `${fundsuiPackageId}::channel::new`,
+				});
+
+				tx.transferObjects([channelCap], account.address);
+
+				await mutateAsync(
+					{
+						transaction: tx,
 					},
-				},
-			);
+					{
+						onSuccess: (tx) => {
+							suiClient
+								.waitForTransaction({
+									digest: tx.digest,
+									options: { showEffects: true },
+								})
+								.then(async (result) => {
+									console.log(result);
+									setUploadProgress("Channel created successfully!");
+									// Optionally redirect to the new channel
+									// router.push(`/channel/${channelId}`);
+								});
+						},
+					},
+				);
+			} catch (error) {
+				console.error("Error creating channel:", error);
+				setUploadProgress(`Error: ${error instanceof Error ? error.message : "Failed to create channel"}`);
+			} finally {
+				setIsUploading(false);
+			}
 		},
 	});
 
@@ -235,12 +277,19 @@ export default function CreateChannelPage() {
 					)}
 				</form.Field>
 
+				{uploadProgress && (
+					<div className="rounded-md bg-blue-50 border border-blue-200 p-4">
+						<p className="text-blue-700 text-sm">{uploadProgress}</p>
+					</div>
+				)}
+
 				<div className="pt-4">
 					<button
-						className="w-full rounded-md bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
+						className="w-full rounded-md bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+						disabled={isUploading}
 						type="submit"
 					>
-						Create Channel
+						{isUploading ? "Creating Channel..." : "Create Channel"}
 					</button>
 				</div>
 			</form>
