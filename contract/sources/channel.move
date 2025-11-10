@@ -3,14 +3,12 @@ module podcast::channel;
 use std::string::String;
 use sui::dynamic_field as df;
 
-// ==== Errors ====
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 
 #[error]
 const EChannelAlreadyExists: vector<u8> = b"Channel already exists for this address";
 
-// ==== Structs ====
 public struct Channel has key, store {
     id: UID,
     owner: address,
@@ -23,10 +21,8 @@ public struct Channel has key, store {
     max_subscription_duration_in_months: u8,
 }
 
-// Registry to track one channel per address
 public struct ChannelRegistry has key {
     id: UID,
-    // Uses dynamic fields to map address -> channel ID
 }
 
 public struct ChannelCap has key, store {
