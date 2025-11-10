@@ -30,6 +30,18 @@ public struct ChannelCap has key, store {
     channel: ID,
 }
 
+public fun channel_id(cap: &ChannelCap): ID {
+    cap.channel
+}
+
+public(package) fun borrow_uid_mut(channel: &mut Channel): &mut UID {
+    &mut channel.id
+}
+
+public(package) fun borrow_uid(channel: &Channel): &UID {
+    &channel.id
+}
+
 fun init(ctx: &mut TxContext) {
     let registry = ChannelRegistry {
         id: object::new(ctx),
