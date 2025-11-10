@@ -14,7 +14,7 @@ export default function CreateChannelPage() {
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
 	const fundsuiRegistryId = useNetworkVariable("fundsuiChannelRegistry");
 	const suiClient = useSuiClient();
-	const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+	const { mutateAsync } = useSignAndExecuteTransaction();
 
 	const form = useForm({
 		defaultValues: {
@@ -25,13 +25,7 @@ export default function CreateChannelPage() {
 			subscriptionPrice: "",
 		},
 		onSubmit: async ({ value }) => {
-			console.log("Form submitted with values:", value);
-			console.log("Display Name:", value.displayName);
-			console.log("Tagline:", value.tagline);
-			console.log("Description:", value.description);
-			console.log("Cover Photo:", value.coverPhoto);
-			console.log("Subscription Price:", value.subscriptionPrice);
-			console.log("Account", account);
+			//TODO upload cover photo uri and profile photo uri to walrus
 
 			const tx = new Transaction();
 
@@ -49,10 +43,9 @@ export default function CreateChannelPage() {
 				target: `${fundsuiPackageId}::channel::new`,
 			});
 
-			// Transfer the ChannelCap to the sender
 			tx.transferObjects([channelCap], account.address);
 
-			signAndExecute(
+			await mutateAsync(
 				{
 					transaction: tx,
 				},
@@ -84,7 +77,6 @@ export default function CreateChannelPage() {
 					form.handleSubmit();
 				}}
 			>
-				{/* Display Name */}
 				<form.Field name="displayName">
 					{(field) => (
 						<div>
@@ -107,7 +99,6 @@ export default function CreateChannelPage() {
 					)}
 				</form.Field>
 
-				{/* Tagline */}
 				<form.Field name="tagline">
 					{(field) => (
 						<div>
@@ -130,7 +121,6 @@ export default function CreateChannelPage() {
 					)}
 				</form.Field>
 
-				{/* Description */}
 				<form.Field name="description">
 					{(field) => (
 						<div>
@@ -154,7 +144,6 @@ export default function CreateChannelPage() {
 					)}
 				</form.Field>
 
-				{/* Cover Photo */}
 				<form.Field name="coverPhoto">
 					{(field) => (
 						<div>
@@ -185,7 +174,6 @@ export default function CreateChannelPage() {
 					)}
 				</form.Field>
 
-				{/* Subscription Price */}
 				<form.Field name="subscriptionPrice">
 					{(field) => (
 						<div>
@@ -216,7 +204,6 @@ export default function CreateChannelPage() {
 					)}
 				</form.Field>
 
-				{/* Submit Button */}
 				<div className="pt-4">
 					<button
 						className="w-full rounded-md bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
