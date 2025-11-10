@@ -11,6 +11,12 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
 				fundsuiChannelRegistry: env.NEXT_PUBLIC_CHANNEL_REGISTRY,
 			},
 		},
-		mainnet: { url: getFullnodeUrl("mainnet") },
+		mainnet: { 
+			url: getFullnodeUrl("mainnet"),
+			variables: {
+				fundsuiPackageId: env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+				fundsuiChannelRegistry: env.NEXT_PUBLIC_CHANNEL_REGISTRY,
+			},
+		},
 	});
 export { useNetworkVariable, useNetworkVariables, networkConfig };

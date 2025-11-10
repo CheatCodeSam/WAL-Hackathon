@@ -1,4 +1,4 @@
-module fundsui::podcast;
+// module fundsui::podcast;
 
 use std::string::String;
 use sui::dynamic_field as df;
