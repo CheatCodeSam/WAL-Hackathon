@@ -1,6 +1,5 @@
 module podcast::channel;
 
-use podcast::podcast::Podcast;
 use std::string::String;
 use sui::dynamic_field as df;
 
@@ -9,219 +8,98 @@ use sui::dynamic_field as df;
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 
 #[error]
-const EPodcastAlreadyPublished: vector<u8> = b"Podcast already published";
+const EChannelAlreadyExists: vector<u8> = b"Channel already exists for this address";
 
-#[error]
-const EPodcastDoesNotExist: vector<u8> = b"Podcast does not exist";
-
-#[error]
-const EPodcastIsNotPublished: vector<u8> = b"podcast is not published";
-
+// ==== Structs ====
 public struct Channel has key, store {
     id: UID,
-    username: String,
-    bio: String,
-    cover_photo: String, // URL
-    profile_photo: String, // URL
-    number_of_podcasts: u64,
-    number_of_listens: u64,
-    subscrption_price: u64, // 0 means free
-    subscrption_duration: u64, // in milliseconds
+    owner: address,
+    display_name: String,
+    tag_line: String,
+    description: String,
+    cover_photo_uri: String,
+    profile_photo_uri: String,
+    subscription_price_in_mist: u64, 
+    max_subscription_duration_in_months: u8,
 }
 
-// ==== Caps ====
+// Registry to track one channel per address
+public struct ChannelRegistry has key {
+    id: UID,
+    // Uses dynamic fields to map address -> channel ID
+}
+
 public struct ChannelCap has key, store {
     id: UID,
-    channel: ID, // ID of the creator object it controls
+    channel: ID,
+}
+
+fun init(ctx: &mut TxContext) {
+    let registry = ChannelRegistry {
+        id: object::new(ctx),
+    };
+    transfer::share_object(registry);
 }
 
 public fun new(
-    username: String,
-    bio: String,
-    cover_photo: String,
-    profile_photo: String,
+    registry: &mut ChannelRegistry,
+    display_name: String,
+    tag_line: String,
+    description: String,
+    cover_photo_uri: String,
+    profile_photo_uri: String,
+    subscription_price_in_mist: u64,  
+    max_subscription_duration_in_months: u8,
     ctx: &mut TxContext,
 ): ChannelCap {
+    let sender = ctx.sender();
+    
+    assert!(!df::exists_(&registry.id, sender), EChannelAlreadyExists);
+
     let channel = Channel {
         id: object::new(ctx),
-        username,
-        bio,
-        cover_photo,
-        profile_photo,
-        number_of_podcasts: 0,
-        number_of_listens: 0,
-        subscrption_price: 0,
-        subscrption_duration: 1000 * 60 * 60 * 24 * 30, // 30 days
+        owner: sender,
+        display_name,
+        tag_line,
+        description,
+        cover_photo_uri,
+        profile_photo_uri,
+        subscription_price_in_mist,
+        max_subscription_duration_in_months
     };
+
+    let channel_id = object::id(&channel);
 
     let channel_cap = ChannelCap {
         id: object::new(ctx),
-        channel: object::id(&channel),
+        channel: channel_id,
     };
+
+    df::add(&mut registry.id, sender, channel_id);
 
     transfer::public_share_object(channel);
 
     channel_cap
 }
 
-// ==== Setter Funtions ====
-public fun set_username(channel: &mut Channel, channel_cap: &ChannelCap, new_username: String) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-
-    channel.username = new_username;
-}
-
-public fun set_bio(channel: &mut Channel, channel_cap: &ChannelCap, new_bio: String) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-
-    channel.bio = new_bio;
-}
-
-public fun set_cover_photo(
+public fun update_channel(
+    cap: &ChannelCap,
     channel: &mut Channel,
-    channel_cap: &ChannelCap,
-    new_cover_photo: String,
+    display_name: String,
+    tag_line: String,
+    description: String,
+    cover_photo_uri: String,
+    profile_photo_uri: String,
+    subscription_price_in_mist: u64,
+    max_subscription_duration_in_months: u8,
 ) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-
-    channel.cover_photo = new_cover_photo;
-}
-
-public fun set_profile_photo(
-    channel: &mut Channel,
-    channel_cap: &ChannelCap,
-    new_profile_photo: String,
-) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-
-    channel.profile_photo = new_profile_photo;
-}
-
-public fun set_subscrption_price(
-    channel: &mut Channel,
-    channel_cap: &ChannelCap,
-    new_subscrption_price: u64,
-) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-
-    channel.subscrption_price = new_subscrption_price;
-}
-
-public fun set_subscrption_duration(
-    channel: &mut Channel,
-    channel_cap: &ChannelCap,
-    new_subscrption_duration: u64,
-) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-
-    channel.subscrption_duration = new_subscrption_duration;
-}
-
-public(package) fun increment_number_of_podcasts(channel: &mut Channel) {
-    let num_of_podcasts = channel.number_of_podcasts;
-
-    channel.number_of_podcasts = num_of_podcasts + 1;
-}
-
-public(package) fun decrement_number_of_podcasts(channel: &mut Channel) {
-    let num_of_podcasts = channel.number_of_podcasts;
-
-    if (num_of_podcasts > 0) {
-        channel.number_of_podcasts = num_of_podcasts - 1;
-    };
-}
-
-public(package) fun increment_number_of_listens(channel: &mut Channel) {
-    let num_of_listens = channel.number_of_listens;
-
-    channel.number_of_listens = num_of_listens + 1;
-}
-
-// ==== Getter Functions ====
-public fun id(channel: &Channel): ID {
-    object::id(channel)
-}
-
-public fun channel(channel_cap: &ChannelCap): ID {
-    channel_cap.channel
-}
-
-public fun subscrption_duration(channel: &Channel): u64 {
-    channel.subscrption_duration
-}
-
-public fun is_free(channel: &Channel): bool {
-    channel.subscrption_price == 0
-}
-
-// ===== Podcast Management =====
-public fun add_episode(
-    channel: &mut Channel,
-    podcast_id: ID,
-    name: String,
-    duration: u64,
-    blob_id: String,
-    file_type: String,
-    channel_cap: &ChannelCap,
-) {
-    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
-    assert!(df::exists_(&channel.id, podcast_id), EPodcastDoesNotExist);
-
-    let podcast: &mut Podcast = df::borrow_mut(&mut channel.id, podcast_id);
-
-    podcast.add(name, duration, blob_id, file_type);
-}
-
-public fun remove_episode(channel: &mut Channel, podcast_id: ID, blob_id: String, channel_cap: &ChannelCap) {
-    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
-    assert!(df::exists_(&channel.id, podcast_id), EPodcastDoesNotExist);
-
-    let podcast: &mut Podcast = df::borrow_mut(&mut channel.id, podcast_id);
-
-    podcast.remove(blob_id);
-}
-
-public fun destroy(channel: &mut Channel, podcast_id: ID, channel_cap: &ChannelCap) {
-    assert!(channel.id() == channel_cap.channel(), EUnauthorizedAccess);
-    assert!(df::exists_(&channel.id, podcast_id), EPodcastDoesNotExist);
-
-    let podcast: Podcast = df::remove(&mut channel.id, podcast_id);
-
-    podcast.destroy();
-}
-
-// Publish podcast to channel
-public fun publish_podcast(podcast: Podcast, channel: &mut Channel, channel_cap: &ChannelCap) {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-    assert!(df::exists_(&channel.id, podcast.id()), EPodcastAlreadyPublished);
-
-    df::add(
-        &mut channel.id,
-        podcast.id(),
-        podcast,
-    );
-
-    channel.increment_number_of_podcasts();
-
-    // Todo: emit PodcastPublished
-}
-
-// Unpublish podcast from channel
-public fun unpublish_podcast(
-    podcast_id: ID,
-    channel: &mut Channel,
-    channel_cap: &ChannelCap,
-): Podcast {
-    assert!(channel.id() == channel_cap.channel, EUnauthorizedAccess);
-    assert!(df::exists_(&channel.id, podcast_id), EPodcastIsNotPublished);
-
-    let podcast = df::remove(
-        &mut channel.id,
-        podcast_id,
-    );
-
-    channel.decrement_number_of_podcasts();
-    podcast
-
-    // Todo: emit PodcastPublished
+    assert!(object::id(channel) == cap.channel, EUnauthorizedAccess);
+    
+    channel.display_name = display_name;
+    channel.tag_line = tag_line;
+    channel.description = description;
+    channel.cover_photo_uri = cover_photo_uri;
+    channel.profile_photo_uri = profile_photo_uri;
+    channel.subscription_price_in_mist = subscription_price_in_mist;
+    channel.max_subscription_duration_in_months = max_subscription_duration_in_months;
 }
