@@ -1,4 +1,4 @@
-module podcast::channel;
+module fundsui::channel;
 
 use std::string::String;
 use sui::dynamic_field as df;
