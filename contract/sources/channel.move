@@ -82,6 +82,19 @@ public fun new(
     channel_cap
 }
 
+
+public fun get_channel_id_for_address(
+    registry: &ChannelRegistry,
+    addr: address
+): Option<ID> {
+    if (df::exists_(&registry.id, addr)) {
+        let channel_id = df::borrow<address, ID>(&registry.id, addr);
+        option::some(*channel_id)
+    } else {
+        option::none()
+    }
+}
+
 public fun update_channel(
     cap: &ChannelCap,
     channel: &mut Channel,
