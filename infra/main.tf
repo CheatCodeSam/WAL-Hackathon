@@ -1,3 +1,11 @@
+provider "aws" {
+  default_tags {
+    tags = {
+      project = "fundsui"
+    }
+  }
+}
+
 resource "aws_ecr_repository" "fundsui_aer" {
   name                 = "fundsui"
   image_tag_mutability = "IMMUTABLE_WITH_EXCLUSION"
