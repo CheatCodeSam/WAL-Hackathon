@@ -64,8 +64,6 @@ export default function CreateChannelPage() {
 								options: { showEffects: true },
 							})
 							.then(async (result) => {
-								const objectId =
-									result.effects?.created?.[0]?.reference?.objectId;
 								console.log(result);
 							});
 					},
@@ -75,159 +73,154 @@ export default function CreateChannelPage() {
 	});
 
 	return (
-		<div className="max-w-2xl mx-auto p-6">
-			<h1 className="text-3xl font-bold mb-8">Create New Channel</h1>
+		<div className="mx-auto max-w-2xl p-6">
+			<h1 className="mb-8 font-bold text-3xl">Create New Channel</h1>
 
 			<form
+				className="space-y-6"
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					form.handleSubmit();
 				}}
-				className="space-y-6"
 			>
 				{/* Display Name */}
-				<form.Field
-					name="displayName"
-					children={(field) => (
+				<form.Field name="displayName">
+					{(field) => (
 						<div>
 							<label
-								htmlFor={field.name}
 								className="mb-2 block font-medium text-sm"
+								htmlFor={field.name}
 							>
 								Display Name
 							</label>
 							<input
+								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								id={field.name}
 								name={field.name}
-								value={field.state.value}
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(e.target.value)}
-								className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								placeholder="Enter your channel name"
+								value={field.state.value}
 							/>
 						</div>
 					)}
-				/>
+				</form.Field>
 
 				{/* Tagline */}
-				<form.Field
-					name="tagline"
-					children={(field) => (
+				<form.Field name="tagline">
+					{(field) => (
 						<div>
 							<label
+								className="mb-2 block font-medium text-sm"
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
 							>
 								Tagline
 							</label>
 							<input
+								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								id={field.name}
 								name={field.name}
-								value={field.state.value}
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(e.target.value)}
-								className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								placeholder="A short catchy tagline"
+								value={field.state.value}
 							/>
 						</div>
 					)}
-				/>
+				</form.Field>
 
 				{/* Description */}
-				<form.Field
-					name="description"
-					children={(field) => (
+				<form.Field name="description">
+					{(field) => (
 						<div>
 							<label
+								className="mb-2 block font-medium text-sm"
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
 							>
 								Description
 							</label>
 							<textarea
+								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								id={field.name}
 								name={field.name}
-								value={field.state.value}
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(e.target.value)}
-								rows={5}
-								className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								placeholder="Describe your channel and what subscribers can expect"
+								rows={5}
+								value={field.state.value}
 							/>
 						</div>
 					)}
-				/>
+				</form.Field>
 
 				{/* Cover Photo */}
-				<form.Field
-					name="coverPhoto"
-					children={(field) => (
+				<form.Field name="coverPhoto">
+					{(field) => (
 						<div>
 							<label
+								className="mb-2 block font-medium text-sm"
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
 							>
 								Cover Photo
 							</label>
 							<input
+								accept="image/*"
+								className="w-full rounded-md border border-gray-300 px-4 py-2 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700 file:text-sm hover:file:bg-blue-100 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								id={field.name}
 								name={field.name}
-								type="file"
-								accept="image/*"
 								onBlur={field.handleBlur}
 								onChange={(e) => {
 									const file = e.target.files?.[0] || null;
 									field.handleChange(file);
 								}}
-								className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+								type="file"
 							/>
 							{field.state.value && (
-								<p className="mt-2 text-sm text-gray-600">
+								<p className="mt-2 text-gray-600 text-sm">
 									Selected: {field.state.value.name}
 								</p>
 							)}
 						</div>
 					)}
-				/>
+				</form.Field>
 
 				{/* Subscription Price */}
-				<form.Field
-					name="subscriptionPrice"
-					children={(field) => (
+				<form.Field name="subscriptionPrice">
+					{(field) => (
 						<div>
 							<label
+								className="mb-2 block font-medium text-sm"
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
 							>
 								Subscription Price
 							</label>
 							<div className="relative">
-								<span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+								<span className="-translate-y-1/2 absolute top-1/2 left-4 text-gray-500">
 									$
 								</span>
 								<input
+									className="w-full rounded-md border border-gray-300 py-2 pr-4 pl-8 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 									id={field.name}
-									name={field.name}
-									type="number"
-									step="0.01"
 									min="0"
-									value={field.state.value}
+									name={field.name}
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
-									className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 									placeholder="0.00"
+									step="0.01"
+									type="number"
+									value={field.state.value}
 								/>
 							</div>
 						</div>
 					)}
-				/>
+				</form.Field>
 
 				{/* Submit Button */}
 				<div className="pt-4">
 					<button
+						className="w-full rounded-md bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
 						type="submit"
-						className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-md transition-colors"
 					>
 						Create Channel
 					</button>
