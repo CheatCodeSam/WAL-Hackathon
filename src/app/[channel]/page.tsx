@@ -6,6 +6,7 @@ interface PageProps {
 	}>;
 }
 
+//TODO error handling, handle if we get a notfound error
 export default async function Channel({ params }: PageProps) {
 	const { channel: suiAddress } = await params;
 
