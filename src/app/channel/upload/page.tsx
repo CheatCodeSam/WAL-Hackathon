@@ -29,30 +29,30 @@ export default function Upload() {
 			<h1 className="mb-6 font-bold text-3xl">Upload Podcast</h1>
 
 			<form
+				className="space-y-6"
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					form.handleSubmit();
 				}}
-				className="space-y-6"
 			>
 				{/* Title Field */}
 				<form.Field name="title">
 					{(field) => (
 						<div>
 							<label
+								className="mb-2 block font-medium text-sm"
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
 							>
 								Podcast Title
 							</label>
 							<input
+								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								id={field.name}
+								onChange={(e) => field.handleChange(e.target.value)}
+								placeholder="Enter podcast title"
 								type="text"
 								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-								placeholder="Enter podcast title"
 							/>
 						</div>
 					)}
@@ -63,18 +63,18 @@ export default function Upload() {
 					{(field) => (
 						<div>
 							<label
-								htmlFor={field.name}
 								className="mb-2 block font-medium text-sm"
+								htmlFor={field.name}
 							>
 								Description
 							</label>
 							<textarea
+								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								id={field.name}
-								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
-								rows={5}
-								className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								placeholder="Enter podcast description"
+								rows={5}
+								value={field.state.value}
 							/>
 						</div>
 					)}
@@ -85,24 +85,24 @@ export default function Upload() {
 					{(field) => (
 						<div>
 							<label
-								htmlFor={field.name}
 								className="mb-2 block font-medium text-sm"
+								htmlFor={field.name}
 							>
 								Audio File
 							</label>
 							<div className="flex flex-col gap-2">
 								<input
-									id={field.name}
-									type="file"
 									accept="audio/*"
+									className="w-full rounded-md border border-gray-300 px-4 py-2 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700 file:text-sm hover:file:bg-blue-100 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+									id={field.name}
 									onChange={(e) => {
 										const file = e.target.files?.[0] || null;
 										field.handleChange(file);
 									}}
-									className="w-full rounded-md border border-gray-300 px-4 py-2 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700 file:text-sm hover:file:bg-blue-100 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+									type="file"
 								/>
 								{field.state.value && (
-									<div className="text-sm text-gray-600">
+									<div className="text-gray-600 text-sm">
 										Selected: {field.state.value.name} (
 										{(field.state.value.size / 1024 / 1024).toFixed(2)} MB)
 									</div>
@@ -114,8 +114,8 @@ export default function Upload() {
 
 				{/* Submit Button */}
 				<button
+					className="w-full rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
 					type="submit"
-					className="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors font-medium"
 				>
 					Create Podcast
 				</button>

@@ -1,32 +1,32 @@
-import { type Metrics, type Podcast } from "~/hooks/useCreatorDashboard";
+import type { Metrics, Podcast } from "~/hooks/useCreatorDashboard";
 
 interface MatrixTabProps {
-  podcasts?: Podcast[],
-  metrics: Metrics,
+	podcasts?: Podcast[];
+	metrics: Metrics;
 }
 
 export default function MaxtrixTab({ metrics }: MatrixTabProps) {
-  return (
-    <div>
-            <h2 className="text-2xl font-bold mb-6">Metrics</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-gray-50 p-4 rounded">
-                <h3 className="text-lg font-medium">Total Subscribers</h3>
-                <p className="text-3xl font-bold">{metrics.totalSubscribers}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded">
-                <h3 className="text-lg font-medium">Total Episodes</h3>
-                <p className="text-3xl font-bold">{metrics.totalEpisodes}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded">
-                <h3 className="text-lg font-medium">Monthly Revenue</h3>
-                <p className="text-3xl font-bold">
-                  ${metrics.monthlyRevenue.toFixed(2)}
-                </p>
-              </div>
-            </div>
+	return (
+		<div>
+			<h2 className="mb-6 font-bold text-2xl">Metrics</h2>
+			<div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div className="rounded bg-gray-50 p-4">
+					<h3 className="font-medium text-lg">Total Subscribers</h3>
+					<p className="font-bold text-3xl">{metrics.totalSubscribers}</p>
+				</div>
+				<div className="rounded bg-gray-50 p-4">
+					<h3 className="font-medium text-lg">Total Episodes</h3>
+					<p className="font-bold text-3xl">{metrics.totalEpisodes}</p>
+				</div>
+				<div className="rounded bg-gray-50 p-4">
+					<h3 className="font-medium text-lg">Monthly Revenue</h3>
+					<p className="font-bold text-3xl">
+						${metrics.monthlyRevenue.toFixed(2)}
+					</p>
+				</div>
+			</div>
 
-            {/* {podcasts.length > 0 && (
+			{/* {podcasts.length > 0 && (
               <div>
                 <h3 className="text-xl font-bold mb-4">Podcast Performance</h3>
                 <div className="space-y-4">
@@ -41,6 +41,6 @@ export default function MaxtrixTab({ metrics }: MatrixTabProps) {
                 </div>
               </div>
             )} */}
-          </div>
-  )
+		</div>
+	);
 }

@@ -8,8 +8,8 @@ import { podcastRouter } from "./routers/podcast";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  podcast: podcastRouter,
-  channel: channelRouter,
+	podcast: podcastRouter,
+	channel: channelRouter,
 });
 
 // export type definition of API

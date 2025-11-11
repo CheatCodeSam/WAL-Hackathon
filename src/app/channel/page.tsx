@@ -280,7 +280,7 @@ export default function CreateChannelPage() {
 				</form.Field>
 
 				{uploadProgress && (
-					<div className="rounded-md bg-blue-50 border border-blue-200 p-4">
+					<div className="rounded-md border border-blue-200 bg-blue-50 p-4">
 						<p className="text-blue-700 text-sm">{uploadProgress}</p>
 					</div>
 				)}

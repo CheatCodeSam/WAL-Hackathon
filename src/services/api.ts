@@ -1,76 +1,79 @@
 import { config } from "./config";
 
 interface QueryResponse {
-  data: {
-    objects: {
-      nodes: {
-        asMoveObject: {
-          address: string,
-          contents:
-          Record<string, string>
-        }
-      }[]
-    }
-  }
+	data: {
+		objects: {
+			nodes: {
+				asMoveObject: {
+					address: string;
+					contents: Record<string, string>;
+				};
+			}[];
+		};
+	};
 }
 
 interface SuiObjectResponse {
-  asMoveObject: {
-    address: string,
-    contents:
-    Record<string, string>
-  }
+	asMoveObject: {
+		address: string;
+		contents: Record<string, string>;
+	};
 }
 
-
 export async function getChannelId(address: string) {
-  // if (import.meta.env.DEV) {
-    return { channelCapId: "channelCapId", channelId: "channelId" }
-  // }
+	// if (import.meta.env.DEV) {
+	return { channelCapId: "channelCapId", channelId: "channelId" };
+	// }
 
-  const result = await getObjectsFromAddress(address, `${config.packageId}::channel::ChannelCap`)
+	const result = await getObjectsFromAddress(
+		address,
+		`${config.packageId}::channel::ChannelCap`,
+	);
 
+	if (result.data.objects.nodes.length === 0) {
+		return null;
+	}
 
-  if (result.data.objects.nodes.length === 0) {
-    return null
-  }
+	// const channelCapId = result.data.objects.nodes[0].asMoveObject.address;
+	// const channelId = result.data.objects.nodes[0].asMoveObject.contents["channel"]
+	// return channels.data[0].data.objectI
 
-  // const channelCapId = result.data.objects.nodes[0].asMoveObject.address;
-  // const channelId = result.data.objects.nodes[0].asMoveObject.contents["channel"]
-  // return channels.data[0].data.objectI
-
-  // return { channelCapId, channelId }
+	// return { channelCapId, channelId }
 }
 
 // Channels
 export async function getChannelDetails(channelId: string) {
-  const result = await getObjectById(channelId);
+	const result = await getObjectById(channelId);
 
-  return result.asMoveObject.contents;
+	return result.asMoveObject.contents;
 }
 
 // Podcasts
 export async function getPodcastDetails(podcastId: string) {
-  const result = await getObjectById(podcastId);
+	const result = await getObjectById(podcastId);
 
-  return result.asMoveObject.contents
+	return result.asMoveObject.contents;
 }
 
 export async function getAllPodcasts() {
-  const result = await getSharedObjectsByType(`${config.packageId}::channel::Podcast`);
+	const result = await getSharedObjectsByType(
+		`${config.packageId}::channel::Podcast`,
+	);
 
-  const podcasts = result.data.objects.nodes.map(podcastInfo => podcastInfo);
+	const podcasts = result.data.objects.nodes.map((podcastInfo) => podcastInfo);
 
-  if (podcasts.length == 0) {
-    return null
-  }
+	if (podcasts.length === 0) {
+		return null;
+	}
 
-  return podcasts
+	return podcasts;
 }
 
-
-export async function getObjectsFromAddress(address: string, objectType: string) {
-  const query = `query getSharedObjectByType($owner: SuiAddress!, $objectType: String!) {
+export async function getObjectsFromAddress(
+	address: string,
+	objectType: string,
+) {
+	const query = `query getSharedObjectByType($owner: SuiAddress!, $objectType: String!) {
     objects(filter: { type: $objectType, owner: $owner }) {
         nodes {
             asMoveObject {
@@ -83,13 +86,13 @@ export async function getObjectsFromAddress(address: string, objectType: string)
     }
 }`;
 
-  const variables = { objectType, address };
+	const variables = { objectType, address };
 
-  return fetchQuery(query, variables)
+	return fetchQuery(query, variables);
 }
 
 export async function getSharedObjectsByType(objectType: string) {
-  const query = `query getSharedObjectByType($owner: SuiAddress!, $objectType: String!) {
+	const query = `query getSharedObjectByType($owner: SuiAddress!, $objectType: String!) {
     objects(filter: { type: $objectType, owner: $owner }) {
         nodes {
           address
@@ -102,13 +105,13 @@ export async function getSharedObjectsByType(objectType: string) {
     }
 }`;
 
-  const variables = { objectType };
+	const variables = { objectType };
 
-  return fetchQuery(query, variables);
+	return fetchQuery(query, variables);
 }
 
 export async function getObjectById(id: string) {
-  const query = `query Object($id: SuiAddress!) {
+	const query = `query Object($id: SuiAddress!) {
     object(address: $id) {
         asMoveObject {
             address
@@ -119,45 +122,52 @@ export async function getObjectById(id: string) {
     }
 }`;
 
-  const variables = { id };
+	const variables = { id };
 
-  try {
-    const response = await fetch('https://graphql.mainnet.sui.io/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables })
-    });
+	try {
+		const response = await fetch("https://graphql.mainnet.sui.io/graphql", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ query, variables }),
+		});
 
-    if (!response.ok) {
-      throw new Error(`Network error: ${response.status} ${response.statusText}`);
-    }
+		if (!response.ok) {
+			throw new Error(
+				`Network error: ${response.status} ${response.statusText}`,
+			);
+		}
 
-    const result = await response.json();
-    // return the GraphQL data field if present, otherwise the full response
-    return result.data?.object as SuiObjectResponse;
-  } catch (error) {
-    console.error('Error fetching objects', error);
-    throw error;
-  }
+		const result = await response.json();
+		// return the GraphQL data field if present, otherwise the full response
+		return result.data?.object as SuiObjectResponse;
+	} catch (error) {
+		console.error("Error fetching objects", error);
+		throw error;
+	}
 }
 
-async function fetchQuery(query: string, variables: Record<string, string>): Promise<QueryResponse> {
-  try {
-    const response = await fetch('https://graphql.mainnet.sui.io/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables })
-    });
+async function fetchQuery(
+	query: string,
+	variables: Record<string, string>,
+): Promise<QueryResponse> {
+	try {
+		const response = await fetch("https://graphql.mainnet.sui.io/graphql", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ query, variables }),
+		});
 
-    if (!response.ok) {
-      throw new Error(`Network error: ${response.status} ${response.statusText}`);
-    }
+		if (!response.ok) {
+			throw new Error(
+				`Network error: ${response.status} ${response.statusText}`,
+			);
+		}
 
-    const result = await response.json();
-    // return the GraphQL data field if present, otherwise the full response
-    return result;
-  } catch (error) {
-    console.error('Error fetching objects', error);
-    throw error;
-  }
+		const result = await response.json();
+		// return the GraphQL data field if present, otherwise the full response
+		return result;
+	} catch (error) {
+		console.error("Error fetching objects", error);
+		throw error;
+	}
 }
