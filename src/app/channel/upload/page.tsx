@@ -7,13 +7,17 @@ import {
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
+import { useState } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
+import { uploadAudio, formatFileSize } from "~/services/walrus-utils";
 
 export default function Upload() {
 	const account = useCurrentAccount()!;
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
+	const [isUploading, setIsUploading] = useState(false);
+	const [uploadProgress, setUploadProgress] = useState("");
 
 	const form = useForm({
 		defaultValues: {
@@ -24,40 +28,66 @@ export default function Upload() {
 			sourceFile: null as File | null,
 		},
 		onSubmit: async ({ value }) => {
-			const tx = new Transaction();
+			if (!value.sourceFile) {
+				alert("Please select an audio file");
+				return;
+			}
 
-			const id_value = tx.moveCall({
-				arguments: [
-					tx.object(value.cap),
-					tx.object(value.channel),
-					tx.pure.string(value.title),
-					tx.pure.string(value.description),
-					tx.pure.string("sourcefile"),
-				],
-				target: `${fundsuiPackageId}::podcast::new`,
-			});
+			try {
+				setIsUploading(true);
+				setUploadProgress("Uploading audio to Walrus...");
 
-			console.log(id_value);
+				// Upload audio file to Walrus
+				const audioUploadResult = await uploadAudio(value.sourceFile, {
+					epochs: 10,
+					deletable: false,
+				});
 
-			await mutateAsync(
-				{
-					transaction: tx,
-				},
-				{
-					onSuccess: (tx) => {
-						suiClient
-							.waitForTransaction({
-								digest: tx.digest,
-								options: { showEffects: true },
-							})
-							.then(async (result) => {
-								console.log(result);
-							});
+				setUploadProgress("Creating podcast on blockchain...");
+
+				const tx = new Transaction();
+
+				const id_value = tx.moveCall({
+					arguments: [
+						tx.object(value.cap),
+						tx.object(value.channel),
+						tx.pure.string(value.title),
+						tx.pure.string(value.description),
+						tx.pure.string(audioUploadResult.blobId),
+					],
+					target: `${fundsuiPackageId}::podcast::new`,
+				});
+
+				console.log(id_value);
+
+				await mutateAsync(
+					{
+						transaction: tx,
 					},
-				},
-			);
-
-			//
+					{
+						onSuccess: (tx) => {
+							suiClient
+								.waitForTransaction({
+									digest: tx.digest,
+									options: { showEffects: true },
+								})
+								.then(async (result) => {
+									console.log(result);
+									setUploadProgress("Podcast created successfully!");
+									setTimeout(() => {
+										setIsUploading(false);
+										setUploadProgress("");
+									}, 2000);
+								});
+						},
+					},
+				);
+			} catch (error) {
+				console.error("Upload error:", error);
+				alert(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+				setIsUploading(false);
+				setUploadProgress("");
+			}
 		},
 	});
 
@@ -185,7 +215,7 @@ export default function Upload() {
 								{field.state.value && (
 									<div className="text-gray-600 text-sm">
 										Selected: {field.state.value.name} (
-										{(field.state.value.size / 1024 / 1024).toFixed(2)} MB)
+										{formatFileSize(field.state.value.size)})
 									</div>
 								)}
 							</div>
@@ -195,10 +225,11 @@ export default function Upload() {
 
 				{/* Submit Button */}
 				<button
-					className="w-full rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+					className="w-full rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 					type="submit"
+					disabled={isUploading}
 				>
-					Create Podcast
+					{isUploading ? uploadProgress : "Create Podcast"}
 				</button>
 			</form>
 		</div>

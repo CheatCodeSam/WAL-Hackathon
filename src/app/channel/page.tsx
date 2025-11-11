@@ -44,7 +44,7 @@ export default function CreateChannelPage() {
 						epochs: 10,
 						deletable: false,
 					});
-					profilePictureUri = profileResult.url;
+					profilePictureUri = profileResult.blobId;
 				}
 
 				// Upload cover photo
@@ -56,7 +56,7 @@ export default function CreateChannelPage() {
 						epochs: 10,
 						deletable: false,
 					});
-					coverPhotoUri = coverResult.url;
+					coverPhotoUri = coverResult.blobId;
 				}
 
 				setUploadProgress("Creating channel on blockchain...");
