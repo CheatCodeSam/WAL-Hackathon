@@ -7,16 +7,15 @@ use sui::dynamic_field as df;
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 
-#[error]
-const EPodcastNotFound: vector<u8> = b"Podcast not found";
+// #[error]
+// const EPodcastNotFound: vector<u8> = b"Podcast not found";
 
-#[error]
-const EPodcastAlreadyDeleted: vector<u8> = b"Podcast already deleted";
-
-public struct Podcast has drop, store {
-    source_file_uri: String,
+public struct Podcast has key, store {
+    id: UID,
+    source_file_blob_id: String,
     title: String,
     description: String,
+    nouce: String,
     created_at: u64,
 }
 
@@ -25,33 +24,41 @@ public fun new(
     channel: &mut Channel,
     title: String,
     description: String,
-    source_file_uri: String,
+    source_file_blob_id: String,
+    nouce: String, // for encryption
     ctx: &mut TxContext,
 ): ID {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
 
-    let podcast_id = object::new(ctx);
-    let id_value = object::uid_to_inner(&podcast_id);
-
     let podcast = Podcast {
-        source_file_uri,
+        id: object::new(ctx),
+        source_file_blob_id,
         title,
+        nouce,
         description,
         created_at: ctx.epoch_timestamp_ms(),
     };
 
-    df::add(borrow_uid_mut(channel), id_value, podcast);
+    let podcast_id = object::id(&podcast);
 
-    object::delete(podcast_id);
+    df::add(borrow_uid_mut(channel), podcast_id, podcast);
 
-    id_value
+    podcast_id
 }
 
 public fun get_podcast(channel: &Channel, podcast_id: ID): &Podcast {
     df::borrow(borrow_uid(channel), podcast_id)
 }
 
+public fun nouce(podcast: &Podcast): String {
+    podcast.nouce
+}
+
 public fun delete_podcast(cap: &ChannelCap, channel: &mut Channel, podcast_id: ID) {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
-    df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
+    let podcast = df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
+
+    let Podcast { id, ..} = podcast;
+
+    id.delete();
 }

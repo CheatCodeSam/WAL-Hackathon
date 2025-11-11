@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"@mysten/dapp-kit": "^0.19.8",
+		"@mysten/seal": "^0.9.3",
 		"@mysten/sui": "^1.44.0",
 		"@mysten/suins": "^0.9.9",
 		"@t3-oss/env-nextjs": "^0.12.0",

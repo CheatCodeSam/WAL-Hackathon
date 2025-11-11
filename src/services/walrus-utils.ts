@@ -8,6 +8,7 @@ import {
 	uploadToWalrus,
 	type WalrusUploadResponse,
 } from "./walrus";
+import type { EncryptOptions } from "~/app/SealProvider";
 
 /**
  * Validates a file before upload
@@ -236,4 +237,88 @@ export async function uploadWithRetry(
 	}
 
 	throw lastError || new Error("Upload failed after retries");
+}
+
+/**
+ * Generate a unique encryption nonce for Seal
+ * This will be stored in the podcast.nouce field on-chain
+ */
+export function generateEncryptionNonce(): string {
+	// Generate a cryptographically secure random nonce
+	const array = new Uint8Array(32);
+	crypto.getRandomValues(array);
+	return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
+		"",
+	);
+}
+
+/**
+ * Encrypt and upload an audio file with Seal
+ * Returns the encrypted file's blob ID and the nonce for on-chain storage
+ */
+export async function uploadEncryptedAudio(
+	file: File,
+	channelId: string,
+	packageId: string,
+	encryptFunction: (
+		plaintext: Uint8Array | string,
+		opts?: EncryptOptions,
+	) => Promise<{ encryptedObject: Uint8Array; key: Uint8Array }>,
+	options: {
+		maxSize?: number;
+		epochs?: number;
+		deletable?: boolean;
+	} = {},
+): Promise<{
+	blobId: string;
+	url: string;
+	nonce: string;
+	size: number;
+}> {
+	// 1. Validate the audio file
+	const validation = validateFile(file, {
+		maxSize: options.maxSize,
+		allowedTypes: ["audio/"],
+	});
+
+	if (!validation.valid) {
+		throw new Error(validation.error);
+	}
+
+	// 2. Generate unique nonce for this podcast
+	const nonce = generateEncryptionNonce();
+
+	// 3. Read the file as bytes
+	const arrayBuffer = await file.arrayBuffer();
+	const fileBytes = new Uint8Array(arrayBuffer);
+
+	// 4. Create identity using nonce for encryption
+	const identity = nonce;
+
+	// 5. Encrypt with Seal using the identity
+	const { encryptedObject } = await encryptFunction(fileBytes, {
+		identity,
+		threshold: 2, // Require 2 key servers for decryption
+	});
+
+	// 6. Create a new File object from encrypted data
+	const encryptedFile = new File(
+		[new Uint8Array(encryptedObject)],
+		`${file.name}.encrypted`,
+		{
+			type: "application/octet-stream",
+		},
+	);
+
+	// 7. Upload encrypted file to Walrus
+	const uploadResult = await uploadToWalrus(encryptedFile, {
+		epochs: options.epochs ?? 10,
+		deletable: options.deletable ?? false,
+	});
+
+	// 8. Return upload result with nonce for on-chain storage
+	return {
+		...uploadResult,
+		nonce,
+	};
 }
