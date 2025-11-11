@@ -8,8 +8,8 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { useNetworkVariable } from "../networkConfig";
 import { uploadImage } from "~/services/walrus-utils";
+import { useNetworkVariable } from "../networkConfig";
 
 export default function CreateChannelPage() {
 	const account = useCurrentAccount()!;
@@ -17,7 +17,7 @@ export default function CreateChannelPage() {
 	const fundsuiRegistryId = useNetworkVariable("fundsuiChannelRegistry");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
-	
+
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState<string>("");
 
@@ -101,7 +101,9 @@ export default function CreateChannelPage() {
 				);
 			} catch (error) {
 				console.error("Error creating channel:", error);
-				setUploadProgress(`Error: ${error instanceof Error ? error.message : "Failed to create channel"}`);
+				setUploadProgress(
+					`Error: ${error instanceof Error ? error.message : "Failed to create channel"}`,
+				);
 			} finally {
 				setIsUploading(false);
 			}

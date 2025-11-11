@@ -1,4 +1,4 @@
-// module fundsui::podcast;
+module fundsui::podcast;
 
 use std::string::String;
 use sui::dynamic_field as df;
@@ -13,18 +13,14 @@ const EPodcastNotFound: vector<u8> = b"Podcast not found";
 #[error]
 const EPodcastAlreadyDeleted: vector<u8> = b"Podcast already deleted";
 
-// Podcast is stored as a dynamic field on Channel
-// No 'key' ability - only 'store' since it's not a top-level object
-public struct Podcast has store {
+public struct Podcast has store, drop {
     source_file_uri: String,
     title: String,
     description: String,
-    deleted: bool,
     created_at: u64,
 }
 
-// Add a new podcast to a channel (requires ChannelCap to prove ownership)
-public fun add_podcast(
+public fun new(
     cap: &ChannelCap,
     channel: &mut Channel,
     title: String,
@@ -41,7 +37,6 @@ public fun add_podcast(
         source_file_uri,
         title,
         description,
-        deleted: false,
         created_at: ctx.epoch_timestamp_ms(),
     };
     
@@ -50,4 +45,15 @@ public fun add_podcast(
     object::delete(podcast_id);
     
     id_value
+}
+
+
+public fun get_podcast(channel: &Channel, podcast_id: ID): &Podcast {
+    df::borrow(borrow_uid(channel), podcast_id)
+}
+
+
+public fun delete_podcast(cap: &ChannelCap, channel: &mut Channel, podcast_id: ID) {
+    assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
+    df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
 }

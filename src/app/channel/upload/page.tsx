@@ -26,7 +26,7 @@ export default function Upload() {
 
 	return (
 		<div className="container mx-auto max-w-2xl py-8">
-			<h1 className="text-3xl font-bold mb-6">Upload Podcast</h1>
+			<h1 className="mb-6 font-bold text-3xl">Upload Podcast</h1>
 
 			<form
 				onSubmit={(e) => {
@@ -64,7 +64,7 @@ export default function Upload() {
 						<div>
 							<label
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
+								className="mb-2 block font-medium text-sm"
 							>
 								Description
 							</label>
@@ -86,7 +86,7 @@ export default function Upload() {
 						<div>
 							<label
 								htmlFor={field.name}
-								className="block text-sm font-medium mb-2"
+								className="mb-2 block font-medium text-sm"
 							>
 								Audio File
 							</label>
@@ -99,7 +99,7 @@ export default function Upload() {
 										const file = e.target.files?.[0] || null;
 										field.handleChange(file);
 									}}
-									className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+									className="w-full rounded-md border border-gray-300 px-4 py-2 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:font-semibold file:text-blue-700 file:text-sm hover:file:bg-blue-100 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 								/>
 								{field.state.value && (
 									<div className="text-sm text-gray-600">
