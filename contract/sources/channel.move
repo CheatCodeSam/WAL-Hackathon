@@ -17,7 +17,7 @@ public struct Channel has key, store {
     description: String,
     cover_photo_uri: String,
     profile_photo_uri: String,
-    subscription_price_in_mist: u64, 
+    subscription_price_in_mist: u64,
     max_subscription_duration_in_months: u8,
 }
 
@@ -56,12 +56,12 @@ public fun new(
     description: String,
     cover_photo_uri: String,
     profile_photo_uri: String,
-    subscription_price_in_mist: u64,  
+    subscription_price_in_mist: u64,
     max_subscription_duration_in_months: u8,
     ctx: &mut TxContext,
 ): ChannelCap {
     let sender = ctx.sender();
-    
+
     assert!(!df::exists_(&registry.id, sender), EChannelAlreadyExists);
 
     let channel = Channel {
@@ -73,7 +73,7 @@ public fun new(
         cover_photo_uri,
         profile_photo_uri,
         subscription_price_in_mist,
-        max_subscription_duration_in_months
+        max_subscription_duration_in_months,
     };
 
     let channel_id = object::id(&channel);
@@ -90,11 +90,7 @@ public fun new(
     channel_cap
 }
 
-
-public fun get_channel_id_for_address(
-    registry: &ChannelRegistry,
-    addr: address
-): Option<ID> {
+public fun get_channel_id_for_address(registry: &ChannelRegistry, addr: address): Option<ID> {
     if (df::exists_(&registry.id, addr)) {
         let channel_id = df::borrow<address, ID>(&registry.id, addr);
         option::some(*channel_id)
@@ -115,7 +111,7 @@ public fun update_channel(
     max_subscription_duration_in_months: u8,
 ) {
     assert!(object::id(channel) == cap.channel, EUnauthorizedAccess);
-    
+
     channel.display_name = display_name;
     channel.tag_line = tag_line;
     channel.description = description;
@@ -123,4 +119,16 @@ public fun update_channel(
     channel.profile_photo_uri = profile_photo_uri;
     channel.subscription_price_in_mist = subscription_price_in_mist;
     channel.max_subscription_duration_in_months = max_subscription_duration_in_months;
+}
+
+public fun get_max_subscription_duration_in_months(channel: &Channel): u8 {
+    channel.max_subscription_duration_in_months
+}
+
+public fun get_subscription_price_in_mist(channel: &Channel): u64 {
+    channel.subscription_price_in_mist
+}
+
+public fun get_channel_owner(channel: &Channel): address {
+    channel.owner
 }
