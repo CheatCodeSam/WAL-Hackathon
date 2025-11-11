@@ -34,16 +34,16 @@ export default function Upload() {
 			}
 
 			try {
-				// setIsUploading(true);
-				// setUploadProgress("Uploading audio to Walrus...");
+				setIsUploading(true);
+				setUploadProgress("Uploading audio to Walrus...");
 
-				// // Upload audio file to Walrus
-				// const audioUploadResult = await uploadAudio(value.sourceFile, {
-				// 	epochs: 10,
-				// 	deletable: false,
-				// });
+				// Upload audio file to Walrus
+				const audioUploadResult = await uploadAudio(value.sourceFile, {
+					epochs: 10,
+					deletable: false,
+				});
 
-				// setUploadProgress("Creating podcast on blockchain...");
+				setUploadProgress("Creating podcast on blockchain...");
 
 				const tx = new Transaction();
 
@@ -53,7 +53,7 @@ export default function Upload() {
 						tx.object(value.channel),
 						tx.pure.string(value.title),
 						tx.pure.string(value.description),
-						tx.pure.string("audioUploadResult.blobId"),
+						tx.pure.string(audioUploadResult.blobId),
 					],
 					target: `${fundsuiPackageId}::podcast::new`,
 				});
