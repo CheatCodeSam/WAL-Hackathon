@@ -13,7 +13,13 @@ const EPodcastNotFound: vector<u8> = b"Podcast not found";
 #[error]
 const EPodcastAlreadyDeleted: vector<u8> = b"Podcast already deleted";
 
-public struct Podcast has drop, store {
+public struct PodcastCap has key, store {
+    id: UID,
+    podcast: ID,
+}
+
+public struct Podcast has key, store {
+    id: UID,
     source_file_uri: String,
     title: String,
     description: String,

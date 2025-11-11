@@ -25,7 +25,7 @@ public struct ChannelRegistry has key {
     id: UID,
 }
 
-public struct ChannelCap has key, store {
+public struct ChannelCap has key {
     id: UID,
     channel: ID,
 }
