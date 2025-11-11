@@ -37,27 +37,27 @@ export default function CreateChannelPage() {
 
 				// Upload profile picture
 				let profilePictureUri = "Testing";
-				if (value.profilePicture) {
-					setUploadProgress("Uploading profile picture...");
-					const profileResult = await uploadImage(value.profilePicture, {
-						maxSize: 5 * 1024 * 1024, // 5MB
-						epochs: 10,
-						deletable: false,
-					});
-					profilePictureUri = profileResult.url;
-				}
+				// if (value.profilePicture) {
+				// 	setUploadProgress("Uploading profile picture...");
+				// 	const profileResult = await uploadImage(value.profilePicture, {
+				// 		maxSize: 5 * 1024 * 1024, // 5MB
+				// 		epochs: 10,
+				// 		deletable: false,
+				// 	});
+				// 	profilePictureUri = profileResult.blobId;
+				// }
 
 				// Upload cover photo
 				let coverPhotoUri = "Testing";
-				if (value.coverPhoto) {
-					setUploadProgress("Uploading cover photo...");
-					const coverResult = await uploadImage(value.coverPhoto, {
-						maxSize: 10 * 1024 * 1024, // 10MB
-						epochs: 10,
-						deletable: false,
-					});
-					coverPhotoUri = coverResult.url;
-				}
+				// if (value.coverPhoto) {
+				// 	setUploadProgress("Uploading cover photo...");
+				// 	const coverResult = await uploadImage(value.coverPhoto, {
+				// 		maxSize: 10 * 1024 * 1024, // 10MB
+				// 		epochs: 10,
+				// 		deletable: false,
+				// 	});
+				// 	coverPhotoUri = coverResult.blobId;
+				// }
 
 				setUploadProgress("Creating channel on blockchain...");
 
