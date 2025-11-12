@@ -161,7 +161,7 @@ export async function getPodcastDetails(podcastId: string) {
 export async function getAllPodcasts() {
 	const result = await getSharedObjectsByType(
 
-		`0x2::dynamic_field::Field<0x2::object::ID, ${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::podcast::Podcast>`,
+		`0x2::dynamic_field::Field<0x1::string::String, ${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::podcast::Podcast>`,
 	);
 
 	const podcasts: Podcast[] = result.data.objects.nodes.map((node: any) => {

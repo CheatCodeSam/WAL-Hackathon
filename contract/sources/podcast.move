@@ -44,7 +44,6 @@ public fun new(
 
     df::add(borrow_uid_mut(channel), source_file_blob_id, podcast);
 
-
     source_file_blob_id
 }
 
@@ -60,7 +59,7 @@ public fun delete_podcast(cap: &ChannelCap, channel: &mut Channel, podcast_id: I
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
     let podcast = df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
 
-    let Podcast { id, ..} = podcast;
+    let Podcast { id, .. } = podcast;
 
     id.delete();
 }
