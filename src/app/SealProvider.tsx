@@ -159,7 +159,7 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 	// Initialize session key
 	const initializeSession = async (
 		targetPackageId: string,
-		ttlMin: number = 60,
+		ttlMin: number = 30,
 	) => {
 		if (!currentAccount?.address) {
 			throw new Error("Wallet not connected");

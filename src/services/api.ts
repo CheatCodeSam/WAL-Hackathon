@@ -2,10 +2,12 @@ import { env } from "~/env";
 import { config } from "./config";
 
 // Types
-interface Podcast {
+export interface Podcast {
+	id?: string;
 	title: string;
 	description: string;
-	source_file_uri: string;
+	source_file_blob_id: string;
+	nouce: string;
 	created_at: string;
 }
 
@@ -115,7 +117,8 @@ export async function getPodcastsByChannel(channelId: string) {
 			return {
 				title: podcast.title || "",
 				description: podcast.description || "",
-				source_file_uri: podcast.source_file_uri || "",
+				source_file_blob_id: podcast.source_file_blob_id || "",
+				nouce: podcast.nouce || "",
 				created_at: podcast.created_at || "",
 			};
 		},
@@ -126,21 +129,33 @@ export async function getPodcastsByChannel(channelId: string) {
 
 export async function getPodcastDetails(podcastId: string) {
 	const result = await getObjectById(podcastId);
-	return result.asMoveObject.contents.json as Podcast;
+	const json = result.asMoveObject.contents.json as Record<string, any>;
+	
+	return {
+		id: podcastId,
+		title: json.value.title || "",
+		description: json.value.description || "",
+		source_file_blob_id: json.value.source_file_blob_id || "",
+		nouce: json.value.nouce || "",
+		created_at: json.value.created_at || "",
+	} as Podcast;
 }
 
 export async function getAllPodcasts() {
 	const result = await getSharedObjectsByType(
-		`${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::podcast::Podcast`,
+
+		`0x2::dynamic_field::Field<0x2::object::ID, ${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::podcast::Podcast>`,
 	);
 
 	const podcasts: Podcast[] = result.data.objects.nodes.map((node: any) => {
 		const podcast = node.asMoveObject.contents.json;
 
 		return {
+			id: node.asMoveObject.address,
 			title: podcast.title || "",
 			description: podcast.description || "",
-			source_file_uri: podcast.source_file_uri || "",
+			source_file_blob_id: podcast.source_file_blob_id || "",
+			nouce: podcast.nouce || "",
 			created_at: podcast.created_at || "",
 		};
 	});

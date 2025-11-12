@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BsCast } from "react-icons/bs";
-import { MdClose, MdDashboard, MdMenu } from "react-icons/md";
+import { MdClose, MdDashboard, MdMenu, MdLock, MdPlayArrow } from "react-icons/md";
 import { RiCompassDiscoverLine } from "react-icons/ri";
 
 const Navbar = () => {
@@ -53,6 +53,18 @@ const Navbar = () => {
 								<span>Dashboard</span>
 							</Link>
 						</li>
+						<li>
+							<Link className={navLinkClass("/play")} href="/play">
+								<MdPlayArrow className="text-xl" />
+								<span>Play</span>
+							</Link>
+						</li>
+						<li>
+							<Link className={navLinkClass("/decrypt")} href="/decrypt">
+								<MdLock className="text-xl" />
+								<span>Decrypt</span>
+							</Link>
+						</li>
 					</ul>
 
 					{/* Right Side Actions - Desktop */}
@@ -98,6 +110,26 @@ const Navbar = () => {
 								>
 									<MdDashboard className="text-xl" />
 									<span>Dashboard</span>
+								</Link>
+							</li>
+							<li>
+								<Link
+									className={navLinkClass("/play")}
+									href="/play"
+									onClick={closeMobileMenu}
+								>
+									<MdPlayArrow className="text-xl" />
+									<span>Play</span>
+								</Link>
+							</li>
+							<li>
+								<Link
+									className={navLinkClass("/decrypt")}
+									href="/decrypt"
+									onClick={closeMobileMenu}
+								>
+									<MdLock className="text-xl" />
+									<span>Decrypt</span>
 								</Link>
 							</li>
 						</ul>
