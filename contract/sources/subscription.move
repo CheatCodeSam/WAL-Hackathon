@@ -10,13 +10,15 @@ const SMART_CONTRACT_PROVIDER_TAX_OUT_OF_100: u64 = 2;
 
 const FRONTEND_PROVIDER_TAX_OUT_OF_100: u64 = 1;
 
+const MS_PER_MONTH: u64 = 2_592_000_000;
+
 #[error]
 const EPurchasingTooManyMonths: vector<u8> = b"Too many months at a time purchased";
 
 #[error]
 const ENotEnoughFundsProvided: vector<u8> = b"Not enough funds have been provided";
 
-public struct Subscription has key {
+public struct Subscription has key, store {
     id: UID,
     channel_id: ID,
     start_timestamp: u64,
@@ -62,9 +64,13 @@ public fun new(
         id: object::new(ctx),
         channel_id: object::id(channel),
         start_timestamp: ctx.epoch_timestamp_ms(),
-        end_timestamp: ctx.epoch_timestamp_ms(),
+        end_timestamp: ctx.epoch_timestamp_ms() + calculate_duration_in_ms(duration_in_months),
     };
     subscription
+}
+
+fun calculate_duration_in_ms(months: u8): u64 {
+    (months as u64) * MS_PER_MONTH
 }
 
 // refill
