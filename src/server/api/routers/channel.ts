@@ -1,6 +1,4 @@
-import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
-import { SuinsClient } from "@mysten/suins";
 import z from "zod";
 import { env } from "~/env";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -8,12 +6,8 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 export const channelRouter = createTRPCRouter({
 	getChannelBySuiAddress: publicProcedure
 		.input(z.object({ address: z.string() }))
-		.query(async ({ input }) => {
-			const client = new SuiClient({ url: getFullnodeUrl("testnet") });
-			const suinsClient = new SuinsClient({
-				client,
-				network: "testnet",
-			});
+		.query(async ({ input, ctx }) => {
+			const { suiClient, suinsClient } = ctx;
 
 			let resolvedAddress: string;
 
@@ -42,22 +36,18 @@ export const channelRouter = createTRPCRouter({
 				],
 			});
 
-			// Use devInspect to call the view function
-			const result = await client.devInspectTransactionBlock({
+			const result = await suiClient.devInspectTransactionBlock({
 				sender: resolvedAddress,
 				transactionBlock: tx,
 			});
 
-			// Check if channel exists
 			if (result.results?.[0]?.returnValues) {
 				const returnValue = result.results[0].returnValues[0];
 				if (returnValue && returnValue[0].length > 1) {
-					// Channel exists - extract the channel ID from the Option<ID>
 					const channelIdBytes = returnValue[0].slice(1);
 					const channelId = `0x${Buffer.from(channelIdBytes).toString("hex")}`;
 
-					// Fetch the channel object to get its name
-					const channelObject = await client.getObject({
+					const channelObject = await suiClient.getObject({
 						id: channelId,
 						options: { showContent: true },
 					});
