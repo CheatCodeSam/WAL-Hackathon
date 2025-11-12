@@ -10,6 +10,7 @@ export type LookUpChannelError =
 	| "CHANNEL_NOT_FOUND_FOR_ADDRESS";
 
 export interface ChannelViewInterface {
+	channelId: string;
 	owner: string;
 	displayName: string;
 	tagLine: string;
@@ -85,6 +86,7 @@ async function getChannelForAddress(
 				const fields = channelObject.data.content.fields as any;
 
 				const channelView: ChannelViewInterface = {
+					channelId: channelId,
 					owner: fields.owner,
 					displayName: fields.display_name,
 					tagLine: fields.tag_line,

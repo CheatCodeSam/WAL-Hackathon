@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { lookupChannel } from "./lookupAddress";
+import { lookupChannel } from "~/services/backend/channel/lookupChannel";
+import { SubscribeButton } from "./SubscribeButton";
 
 interface PageProps {
 	params: Promise<{
@@ -29,7 +30,9 @@ export default async function Channel({ params }: PageProps) {
 		<div className="min-h-screen bg-gray-50 p-8">
 			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
 				<h1 className="mb-6 font-bold text-3xl">Channel Details</h1>
-
+				<div className="space-y-4">
+					<SubscribeButton channelId={channelData.channelId} />
+				</div>
 				<div className="space-y-4">
 					<div>
 						<span className="font-semibold">Owner:</span>
