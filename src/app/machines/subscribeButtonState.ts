@@ -1,5 +1,8 @@
 import { Transaction } from "@mysten/sui/transactions";
+import { err, ok, type Result } from "neverthrow";
 import { suiClient } from "~/server/sui";
+
+export type ChannelSubscribeError = { type: "TRANSACTION_ERROR"; msg: string };
 
 async function checkSubscriptionStatus(
 	userAddress: string,
@@ -16,15 +19,7 @@ export async function subscribeToChannel(
 	fundsuiPackageId: string,
 	// biome-ignore lint/suspicious/noExplicitAny: type is too complicated.
 	mutateAsync: any,
-): Promise<void> {
-	console.log(
-		userAddress,
-		channelId,
-		durationInMonths,
-		frontendAddress,
-		fundsuiPackageId,
-		mutateAsync,
-	);
+): Promise<Result<void, ChannelSubscribeError>> {
 	const tx = new Transaction();
 	const [paymentCoin] = tx.splitCoins(tx.gas, [90000]);
 
@@ -41,11 +36,11 @@ export async function subscribeToChannel(
 	tx.transferObjects([subscription], userAddress);
 
 	try {
-		const result = await mutateAsync({
+		await mutateAsync({
 			transaction: tx,
 		});
-		console.log("Transaction successful:", result);
+		return ok();
 	} catch (error) {
-		console.error("Transaction failed:", error);
+		return err({ type: "TRANSACTION_ERROR", msg: `${error}` });
 	}
 }
