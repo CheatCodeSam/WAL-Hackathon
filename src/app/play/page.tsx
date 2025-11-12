@@ -13,6 +13,7 @@ interface PodcastData {
 	nonce: string;
 	title: string;
 	description: string;
+	file_type: string;
 	channelId: string;
 }
 
@@ -55,6 +56,7 @@ export default function PlayPodcastPage() {
 					nonce: result.data.nouce,
 					title: result.data.title,
 					description: result.data.description,
+					file_type: result.data.file_type,
 					channelId: "",
 				};
 
@@ -99,6 +101,7 @@ export default function PlayPodcastPage() {
 				channelId: podcast.channelId,
 				podcastId: podcast.id,
 				subscriptionObjectId: subscriptionId,
+				file_type: podcast.file_type
 			});
 
 			setAudioUrl(url);

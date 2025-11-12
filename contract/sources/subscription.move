@@ -5,6 +5,7 @@ use fundsui::podcast::{get_podcast};
 use sui::coin::{Self, Coin};
 use sui::sui::SUI;
 use sui::dynamic_field as df;
+use std::string::String;
 
 
 const PLATFORM_ADDRESS: address = @platform_address;
@@ -28,7 +29,10 @@ const EInvalidChannel: vector<u8> = b"Subscription is not for this channel";
 #[error]
 const EPodcastNotFound: vector<u8> = b"Podcast not found";
 
-public struct Subscription has key {
+#[error]
+const EInvalidNonce: vector<u8> = b"Invalid nonce - access denied";
+
+public struct Subscription has key, store {
     id: UID,
     channel_id: ID,
     start_timestamp: u64,
@@ -38,7 +42,7 @@ public struct Subscription has key {
 // Seal access control: Check if subscription is active
 entry fun seal_approve_subscription(
     id: vector<u8>,
-    podcast_id: ID,
+    blob_id: String,
     subscription: &Subscription,
     channel: &Channel,
     ctx: &TxContext,
@@ -55,11 +59,11 @@ entry fun seal_approve_subscription(
         EInvalidChannel,
     );
     assert!(
-        df::exists_(channel.borrow_uid(), podcast_id),
+        df::exists_(channel.borrow_uid(), blob_id),
         EPodcastNotFound,
     );
 
-    let podcast = get_podcast(channel, podcast_id);
+    let podcast = get_podcast(channel, blob_id);
     assert!(podcast.nouce() == id.to_string());
 
 }
@@ -67,7 +71,7 @@ entry fun seal_approve_subscription(
 // Seal access control: Check if user owns subscription for a channel
 entry fun seal_approve_channel_access(
     id: vector<u8>,
-    podcast_id: ID,
+    blob_id: String,
     subscription: &Subscription,
     channel: &Channel,
     ctx: &TxContext,
@@ -75,21 +79,13 @@ entry fun seal_approve_channel_access(
     let current_time = ctx.epoch_timestamp_ms();
     
     // Check if subscription is still valid
+    assert!(current_time <= subscription.end_timestamp, ESubscriptionExpired);
     assert!(
-        current_time <= subscription.end_timestamp,
-        ESubscriptionExpired,
-    );
-    assert!(
-        subscription.channel_id == object::id(channel),
-        EInvalidChannel,
-    );
-    assert!(
-        df::exists_(channel.borrow_uid(), podcast_id),
-        EPodcastNotFound,
-    );
+        subscription.channel_id == object::id(channel), EInvalidChannel);
+    assert!(df::exists_(channel.borrow_uid(), blob_id), EPodcastNotFound);
 
-    let podcast = get_podcast(channel, podcast_id);
-    assert!(podcast.nouce() == id.to_string());
+    let podcast = get_podcast(channel, blob_id);
+    assert!(podcast.nouce() == id.to_string(), EInvalidNonce);
 }
 
 #[allow(lint(self_transfer))]

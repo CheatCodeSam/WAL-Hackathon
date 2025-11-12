@@ -1,5 +1,4 @@
 import { env } from "~/env";
-import { config } from "./config";
 
 // Types
 export interface Podcast {
@@ -8,6 +7,7 @@ export interface Podcast {
 	description: string;
 	source_file_blob_id: string;
 	nouce: string;
+	file_type: string;
 	created_at: string;
 }
 
@@ -17,6 +17,8 @@ interface Channel {
 	description: string;
 	cover_image_uri: string;
 	profile_image_uri: string;
+	subscription_price_in_mist: string;
+	max_subscription_duration_in_months: number;
 }
 
 interface SuiObjectResponse {
@@ -67,7 +69,7 @@ interface DynamicFieldsQueryData {
 export async function getChannelId(address: string) {
 	const result = await getObjectFromAddress(
 		address,
-		`${config.packageId}::channel::ChannelCap`,
+		`${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::channel::ChannelCap`,
 	);
 
 	if (result.data.objects.nodes.length === 0) {
@@ -83,7 +85,18 @@ export async function getChannelId(address: string) {
 
 export async function getChannelDetails(channelId: string) {
 	const result = await getObjectById(channelId);
-	return result.asMoveObject.contents.json as Channel;
+	const json = result.asMoveObject.contents.json;
+	
+	return {
+		id: result.asMoveObject.address,
+		name: json.display_name,
+		description: json.description,
+		tag_line: json.tag_line,
+		cover_image_uri: json.cover_image_uri,
+		profile_image_uri: json.profile_image_uri,
+		subscription_price_in_mist: json.subscription_price_in_mist,
+		max_subscription_duration_in_months: json.max_subscription_duration_in_months,
+	} as Channel;
 }
 
 export async function getAllChannels() {
@@ -100,6 +113,8 @@ export async function getAllChannels() {
 			description: channel.description || "",
 			cover_image_uri: channel.cover_image_uri || "",
 			profile_image_uri: channel.profile_image_uri || "",
+			subscription_price_in_mist: channel.subscription_price_in_mist || "",
+			max_subscription_duration_in_months: channel.max_subscription_duration_in_months || "",
 		};
 	});
 
@@ -118,6 +133,7 @@ export async function getPodcastsByChannel(channelId: string) {
 				title: podcast.title || "",
 				description: podcast.description || "",
 				source_file_blob_id: podcast.source_file_blob_id || "",
+				file_type: podcast.file_type || "",
 				nouce: podcast.nouce || "",
 				created_at: podcast.created_at || "",
 			};
@@ -138,6 +154,7 @@ export async function getPodcastDetails(podcastId: string) {
 		source_file_blob_id: json.value.source_file_blob_id || "",
 		nouce: json.value.nouce || "",
 		created_at: json.value.created_at || "",
+		file_type: json.value.file_type || "",
 	} as Podcast;
 }
 

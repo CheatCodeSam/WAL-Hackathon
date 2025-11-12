@@ -10,9 +10,7 @@ import React, {
 } from "react";
 import { SealClient, SessionKey, EncryptedObject } from "@mysten/seal";
 import { SuiClient } from "@mysten/sui/client";
-import { Transaction } from "@mysten/sui/transactions";
-import { fromHex } from "@mysten/sui/utils";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSignPersonalMessage, useSignTransaction } from "@mysten/dapp-kit";
 
 // Types
 export type KeyServer = {
@@ -91,11 +89,12 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 	suiClient,
 	initialKeyServers,
 	network = "testnet",
-	autoInitSession = false,
+	autoInitSession = true,
 	defaultThreshold = 2,
 }) => {
 	const currentAccount = useCurrentAccount();
 	const [client, setClient] = useState<SealClient | undefined>(undefined);
+	const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
 	const [sessionKey, setSessionKey] = useState<SessionKey | undefined>(
 		undefined,
 	);
@@ -118,8 +117,6 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 					serverConfigs: keyServers.map((ks) => ({
 						objectId: ks.objectId,
 						weight: ks.weight ?? 1,
-            apiKeyName: ks.apiKey,
-            apiKey: ks.apiKey,
 					})),
 					verifyKeyServers: false, // Set to true if you want to verify key servers
 				});
@@ -149,7 +146,7 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 			currentAccount?.address &&
 			!sessionKey
 		) {
-			initializeSession(packageId, 60) // 60 minutes default TTL
+			initializeSession(packageId) // 30 minutes default TTL
 				.catch((err) => {
 					console.error("Failed to auto-initialize session:", err);
 				});
@@ -177,9 +174,8 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 
 			const message = session.getPersonalMessage();
 
-			// Request signature from user's wallet
-			// Note: You'll need to implement this based on your wallet integration
-			// For now, we'll just store the session
+			const { signature } = await signPersonalMessage({ message });
+			session.setPersonalMessageSignature(signature);
 			setSessionKey(session);
 
 			console.log(

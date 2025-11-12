@@ -38,6 +38,24 @@ export default function Upload() {
 				return;
 			}
 
+			const file = value.sourceFile;
+
+			// MIME type from the File object
+			const mimeType = file.type || "";
+
+			// Extension fallback
+			const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+			// Quick audio check
+			const audioExtensions = ["mp3", "wav", "m4a", "ogg", "flac", "aac"];
+			const isAudio =
+				mimeType.startsWith("audio/") || audioExtensions.includes(extension);
+
+			if (!isAudio) {
+				alert("Selected file is not a supported audio file.");
+				return;
+			}
+
 			if (!sealReady) {
 				alert("Seal encryption is not ready. Please wait...");
 				return;
@@ -70,7 +88,8 @@ export default function Upload() {
 						tx.pure.string(value.title),
 						tx.pure.string(value.description),
 						tx.pure.string(audioUploadResult.blobId),
-						tx.pure.string(audioUploadResult.nonce), // Store nonce on-chain
+						tx.pure.string(mimeType),
+						tx.pure.string(audioUploadResult.nonce),
 					],
 					target: `${fundsuiPackageId}::podcast::new`,
 				});

@@ -12,9 +12,10 @@ const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 
 public struct Podcast has key, store {
     id: UID,
-    source_file_blob_id: String,
     title: String,
     description: String,
+    file_type: String,
+    source_file_blob_id: String,
     nouce: String,
     created_at: u64,
 }
@@ -25,9 +26,10 @@ public fun new(
     title: String,
     description: String,
     source_file_blob_id: String,
+    file_type: String,
     nouce: String, // for encryption
     ctx: &mut TxContext,
-): ID {
+): String {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
 
     let podcast = Podcast {
@@ -36,18 +38,18 @@ public fun new(
         title,
         nouce,
         description,
+        file_type,
         created_at: ctx.epoch_timestamp_ms(),
     };
 
-    let podcast_id = object::id(&podcast);
+    df::add(borrow_uid_mut(channel), source_file_blob_id, podcast);
 
-    df::add(borrow_uid_mut(channel), podcast_id, podcast);
 
-    podcast_id
+    source_file_blob_id
 }
 
-public fun get_podcast(channel: &Channel, podcast_id: ID): &Podcast {
-    df::borrow(borrow_uid(channel), podcast_id)
+public fun get_podcast(channel: &Channel, source_file_blob_id: String): &Podcast {
+    df::borrow(borrow_uid(channel), source_file_blob_id)
 }
 
 public fun nouce(podcast: &Podcast): String {
