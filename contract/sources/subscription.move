@@ -16,6 +16,9 @@ const MS_PER_MONTH: u64 = 2_592_000_000;
 const EPurchasingTooManyMonths: vector<u8> = b"Too many months at a time purchased";
 
 #[error]
+const ESubscribingToSelf: vector<u8> = b"Attempting to Subscribe to Self";
+
+#[error]
 const ENotEnoughFundsProvided: vector<u8> = b"Not enough funds have been provided";
 
 public struct Subscription has key, store {
@@ -38,6 +41,7 @@ public fun new(
         EPurchasingTooManyMonths,
     );
 
+    assert!(channel.get_channel_owner() != ctx.sender(), ESubscribingToSelf);
     let required_amount = channel.get_subscription_price_in_mist() * (duration_in_months as u64);
 
     assert!(coin::value(&payment) >= required_amount, ENotEnoughFundsProvided);
