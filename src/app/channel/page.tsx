@@ -77,8 +77,6 @@ export default function CreateChannelPage() {
 					target: `${fundsuiPackageId}::channel::new`,
 				});
 
-				tx.transferObjects([channelCap], account.address);
-
 				await mutateAsync(
 					{
 						transaction: tx,
