@@ -13,7 +13,8 @@ const EPodcastNotFound: vector<u8> = b"Podcast not found";
 #[error]
 const EPodcastAlreadyDeleted: vector<u8> = b"Podcast already deleted";
 
-public struct Podcast has drop, store {
+public struct Podcast has key {
+    id: UID,
     source_file_uri: String,
     title: String,
     description: String,
@@ -30,28 +31,22 @@ public fun new(
 ): ID {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
 
-    let podcast_id = object::new(ctx);
-    let id_value = object::uid_to_inner(&podcast_id);
-
     let podcast = Podcast {
+        id: object::new(ctx),
         source_file_uri,
         title,
         description,
         created_at: ctx.epoch_timestamp_ms(),
     };
 
-    df::add(borrow_uid_mut(channel), id_value, podcast);
+    let podcast_id = object::id(&podcast);
+    transfer::share_object(podcast);
+    df::add(borrow_uid_mut(channel), podcast_id, podcast_id);
 
-    object::delete(podcast_id);
-
-    id_value
-}
-
-public fun get_podcast(channel: &Channel, podcast_id: ID): &Podcast {
-    df::borrow(borrow_uid(channel), podcast_id)
+    podcast_id
 }
 
 public fun delete_podcast(cap: &ChannelCap, channel: &mut Channel, podcast_id: ID) {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
-    df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
+    df::remove<_, ID>(borrow_uid_mut(channel), podcast_id);
 }
