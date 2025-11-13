@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { lookupChannel } from "~/services/backend/channel/lookupChannel";
-import { SubscribeButton } from "./SubscribeButton";
+import { ChannelPageView } from "./ChannelPageView";
 
 interface PageProps {
 	params: Promise<{
@@ -26,67 +26,5 @@ export default async function Channel({ params }: PageProps) {
 
 	const channelData = channel.value;
 
-	return (
-		<div className="min-h-screen bg-gray-50 p-8">
-			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
-				<h1 className="mb-6 font-bold text-3xl">Channel Details</h1>
-				<div className="space-y-4">
-					<SubscribeButton channelId={channelData.channelId} />
-				</div>
-				<div className="space-y-4">
-					<div>
-						<span className="font-semibold">Owner:</span>
-						<p className="break-all font-mono text-gray-700 text-sm">
-							{channelData.owner}
-						</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Display Name:</span>
-						<p className="text-gray-700">{channelData.displayName}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Tag Line:</span>
-						<p className="text-gray-700">{channelData.tagLine}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Description:</span>
-						<p className="text-gray-700">{channelData.description}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Cover Photo URI:</span>
-						<p className="break-all text-gray-700">
-							{channelData.coverPhotoUri}
-						</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Profile Photo URI:</span>
-						<p className="break-all text-gray-700">
-							{channelData.profilePhotoUri}
-						</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Subscription Price (in MIST):</span>
-						<p className="text-gray-700">
-							{channelData.subscriptionPriceInMist}
-						</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">
-							Max Subscription Duration (months):
-						</span>
-						<p className="text-gray-700">
-							{channelData.maxSubscriptionDurationInMonths}
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+	return <ChannelPageView channel={channelData} />;
 }

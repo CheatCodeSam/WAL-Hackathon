@@ -1,0 +1,226 @@
+"use client";
+import {
+	useCurrentAccount,
+	useSignAndExecuteTransaction,
+} from "@mysten/dapp-kit";
+import { useEffect } from "react";
+import { Button } from "~/components/ui/button";
+import type { ChannelViewInterface } from "~/services/backend/channel/lookupChannel";
+import { api } from "~/trpc/react";
+import { subscribeToChannel } from "../machines/subscribeButtonState";
+import { useNetworkVariable } from "../networkConfig";
+import { useChannelPageStore } from "./store";
+
+export interface ChannelPageViewProps {
+	channel: ChannelViewInterface;
+}
+
+export function ChannelPageView(props: ChannelPageViewProps) {
+	const channel = props.channel;
+
+	const account = useCurrentAccount();
+	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
+	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
+	const { mutateAsync } = useSignAndExecuteTransaction();
+
+	// Zustand store
+	const {
+		status,
+		action,
+		error,
+		canSubscribe,
+		canUnsubscribe,
+		isLoading,
+		setNoWallet,
+		startChecking,
+		setSubscribed,
+		setNotSubscribed,
+		setCheckError,
+		startSubscribing,
+		finishSubscribing,
+		failSubscribing,
+		startUnsubscribing,
+		finishUnsubscribing,
+		failUnsubscribing,
+	} = useChannelPageStore();
+
+	const isSubscribedQuery = api.channel.isAddressSubscribedToChannel.useQuery(
+		account?.address ?? "",
+		{ enabled: !!account?.address },
+	);
+
+	// Sync subscription check status with Zustand store
+	useEffect(() => {
+		if (!account?.address) {
+			setNoWallet();
+			return;
+		}
+
+		if (isSubscribedQuery.isPending) {
+			startChecking();
+		} else if (isSubscribedQuery.isError) {
+			setCheckError(isSubscribedQuery.error.message);
+		} else if (isSubscribedQuery.data !== undefined) {
+			// TODO: Update this logic to check if subscription is active or expired
+			// For now, this is a placeholder - you'll need to check:
+			// - If user has subscription object AND it's active -> setSubscribed()
+			// - If user has subscription object BUT it's expired -> setUnsubscribed()
+			// - If user has no subscription object -> setNotSubscribed()
+
+			if (isSubscribedQuery.data) {
+				// TODO: Check if subscription is active or expired
+				// For now assuming active:
+				setSubscribed();
+			} else {
+				// TODO: Check if user has expired subscription object or no object at all
+				// For now assuming no subscription object:
+				setNotSubscribed();
+			}
+		}
+	}, [
+		account?.address,
+		isSubscribedQuery.isPending,
+		isSubscribedQuery.isError,
+		isSubscribedQuery.data,
+		isSubscribedQuery.error,
+		startChecking,
+		setSubscribed,
+		setNotSubscribed,
+		setCheckError,
+		setNoWallet,
+	]);
+
+	const handleSubscribe = async () => {
+		if (!canSubscribe() || !account?.address) return;
+
+		try {
+			startSubscribing();
+			await subscribeToChannel(
+				account.address,
+				channel.channelId,
+				3,
+				hostingClientAddress,
+				fundsuiPackageId,
+				mutateAsync,
+			);
+			finishSubscribing();
+		} catch (err) {
+			failSubscribing(
+				err instanceof Error ? err.message : "Failed to subscribe",
+			);
+		}
+	};
+
+	const handleUnsubscribe = async () => {
+		if (!canUnsubscribe() || !account?.address) return;
+
+		try {
+			startUnsubscribing();
+			// TODO: Implement your unsubscribe logic here
+			finishUnsubscribing();
+		} catch (err) {
+			failUnsubscribing(
+				err instanceof Error ? err.message : "Failed to unsubscribe",
+			);
+		}
+	};
+
+	const getButtonText = () => {
+		if (status === "no_wallet") return "Connect Wallet";
+		if (action === "subscribing") return "Subscribing...";
+		if (action === "unsubscribing") return "Deleting Subscription...";
+		if (status === "checking") return "Checking subscription...";
+		if (status === "subscribed") return "Subscribed";
+		if (status === "expired_subscription") return "Delete Expired Subscription";
+		if (status === "not_subscribed") return "Subscribe";
+		if (status === "error") return "Error - Retry";
+		return "Loading...";
+	};
+
+	const handleButtonClick = () => {
+		if (status === "no_wallet") {
+			// TODO: Implement wallet connection logic or show a message
+			return;
+		}
+		if (status === "expired_subscription") {
+			// User has expired subscription object, delete it
+			handleUnsubscribe();
+		} else if (status === "not_subscribed" || status === "error") {
+			// User has no subscription object, create one
+			handleSubscribe();
+		}
+		// Note: subscribed status doesn't allow unsubscribing (button should be disabled)
+	};
+
+	return (
+		<div className="min-h-screen bg-gray-50 p-8">
+			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
+				<h1 className="mb-6 font-bold text-3xl">Channel Details</h1>
+				<div className="space-y-4">
+					<Button
+						className="cursor-pointer"
+						disabled={isLoading()}
+						onClick={handleButtonClick}
+						type="button"
+					>
+						{getButtonText()}
+					</Button>
+					{error && <p className="text-red-600 text-sm">Error: {error}</p>}
+					<div className="border-gray-300 border-t pt-4 text-gray-600 text-xs">
+						<p>Status: {status}</p>
+						<p>Action: {action}</p>
+						<p>Can Subscribe: {canSubscribe() ? "Yes" : "No"}</p>
+						<p>Can Unsubscribe: {canUnsubscribe() ? "Yes" : "No"}</p>
+					</div>
+				</div>
+				<div className="space-y-4">
+					<div>
+						<span className="font-semibold">Owner:</span>
+						<p className="break-all font-mono text-gray-700 text-sm">
+							{channel.owner}
+						</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">Display Name:</span>
+						<p className="text-gray-700">{channel.displayName}</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">Tag Line:</span>
+						<p className="text-gray-700">{channel.tagLine}</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">Description:</span>
+						<p className="text-gray-700">{channel.description}</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">Cover Photo URI:</span>
+						<p className="break-all text-gray-700">{channel.coverPhotoUri}</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">Profile Photo URI:</span>
+						<p className="break-all text-gray-700">{channel.profilePhotoUri}</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">Subscription Price (in MIST):</span>
+						<p className="text-gray-700">{channel.subscriptionPriceInMist}</p>
+					</div>
+
+					<div>
+						<span className="font-semibold">
+							Max Subscription Duration (months):
+						</span>
+						<p className="text-gray-700">
+							{channel.maxSubscriptionDurationInMonths}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
