@@ -1,7 +1,7 @@
 module fundsui::channel;
 
 use std::string::String;
-use sui::dynamic_field as df;
+use fundsui::user::User;
 
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
@@ -21,10 +21,6 @@ public struct Channel has key, store {
     max_subscription_duration_in_months: u8,
 }
 
-public struct ChannelRegistry has key {
-    id: UID,
-}
-
 public struct ChannelCap has key, store {
     id: UID,
     channel: ID,
@@ -42,15 +38,9 @@ public(package) fun borrow_uid(channel: &Channel): &UID {
     &channel.id
 }
 
-fun init(ctx: &mut TxContext) {
-    let registry = ChannelRegistry {
-        id: object::new(ctx),
-    };
-    transfer::share_object(registry);
-}
 
 public fun new(
-    registry: &mut ChannelRegistry,
+    user: &mut User,
     display_name: String,
     tag_line: String,
     description: String,
@@ -62,7 +52,7 @@ public fun new(
 ): ChannelCap {
     let sender = ctx.sender();
 
-    assert!(!df::exists_(&registry.id, sender), EChannelAlreadyExists);
+    assert!(!user.has_channel_cap(), EChannelAlreadyExists);
 
     let channel = Channel {
         id: object::new(ctx),
@@ -83,20 +73,11 @@ public fun new(
         channel: channel_id,
     };
 
-    df::add(&mut registry.id, sender, channel_id);
+    user.set_channel_cap(object::id(&channel_cap));
 
     transfer::public_share_object(channel);
 
     channel_cap
-}
-
-public fun get_channel_id_for_address(registry: &ChannelRegistry, addr: address): Option<ID> {
-    if (df::exists_(&registry.id, addr)) {
-        let channel_id = df::borrow<address, ID>(&registry.id, addr);
-        option::some(*channel_id)
-    } else {
-        option::none()
-    }
 }
 
 public fun update_channel(

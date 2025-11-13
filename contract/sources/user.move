@@ -4,9 +4,6 @@ module fundsui::user;
 use sui::bag::{Self, Bag};
 use sui::dynamic_field as df;
 
-use fundsui::channel::ChannelCap;
-use fundsui::subscription::Subscription;
-
 #[error]
 const EUserAlreadyExists: vector<u8> = b"user already exists for this address";
 
@@ -55,26 +52,27 @@ public fun new(
   user
 }
 
-public fun set_channel_cap(user: &mut User, cap: &ChannelCap) {
+
+public(package) fun set_channel_cap(user: &mut User, cap_id: ID) {
   assert!(option::is_none<ID>(&user.channel_cap), EChannelCapAlreadySet);
-  user.channel_cap = option::some<ID>(object::id(cap));
+  user.channel_cap = option::some<ID>(cap_id);
 }
 
-public fun add_subscription(user: &mut User, channelId: ID, subscription: Subscription) {
+public fun add_subscription(user: &mut User, channelId: ID, subscriptionId: ID) {
   assert!(!bag::contains(&user.subscriptions, channelId), ESubscriptionAlreadyExists);
-  bag::add(&mut user.subscriptions, channelId, subscription);
+  bag::add(&mut user.subscriptions, channelId, subscriptionId);
 }
 
-public fun borrow_subscription(user: &User, channelId: ID): &Subscription {
-  assert!(bag::contains(&user.subscriptions, channelId), ESubscriptionNotFound);
-  bag::borrow(&user.subscriptions, channelId)
-}
 
-public fun remove_subscription(user: &mut User, channelId: ID): Subscription {
+public fun remove_subscription(user: &mut User, channelId: ID): ID {
   assert!(bag::contains(&user.subscriptions, channelId), ESubscriptionNotFound);
   bag::remove(&mut user.subscriptions, channelId)
 }
 
 public fun has_subscription(user: &User, channelId: ID): bool {
   bag::contains(&user.subscriptions, channelId)
+}
+
+public fun has_channel_cap(user: &User): bool {
+  option::is_some<ID>(&user.channel_cap)
 }
