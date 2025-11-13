@@ -9,13 +9,18 @@ import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
-import { uploadAudio, formatFileSize } from "~/services/walrus-utils";
+import {
+	uploadEncryptedAudio,
+	formatFileSize,
+} from "~/services/walrus-utils";
+import { useSeal } from "~/app/SealProvider";
 
 export default function Upload() {
 	const account = useCurrentAccount()!;
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
+	const { encrypt, ready: sealReady } = useSeal();
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState("");
 
@@ -33,15 +38,44 @@ export default function Upload() {
 				return;
 			}
 
+			const file = value.sourceFile;
+
+			// MIME type from the File object
+			const mimeType = file.type || "";
+
+			// Extension fallback
+			const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+			// Quick audio check
+			const audioExtensions = ["mp3", "wav", "m4a", "ogg", "flac", "aac"];
+			const isAudio =
+				mimeType.startsWith("audio/") || audioExtensions.includes(extension);
+
+			if (!isAudio) {
+				alert("Selected file is not a supported audio file.");
+				return;
+			}
+
+			if (!sealReady) {
+				alert("Seal encryption is not ready. Please wait...");
+				return;
+			}
+
 			try {
 				setIsUploading(true);
-				setUploadProgress("Uploading audio to Walrus...");
+				setUploadProgress("Encrypting audio file...");
 
-				// Upload audio file to Walrus
-				const audioUploadResult = await uploadAudio(value.sourceFile, {
-					epochs: 10,
-					deletable: false,
-				});
+				// Encrypt and upload audio file to Walrus
+				const audioUploadResult = await uploadEncryptedAudio(
+					value.sourceFile,
+					value.channel, // channel ID
+					fundsuiPackageId,
+					encrypt,
+					{
+						epochs: 10,
+						deletable: false,
+					},
+				);
 
 				setUploadProgress("Creating podcast on blockchain...");
 
@@ -54,6 +88,8 @@ export default function Upload() {
 						tx.pure.string(value.title),
 						tx.pure.string(value.description),
 						tx.pure.string(audioUploadResult.blobId),
+						tx.pure.string(mimeType),
+						tx.pure.string(audioUploadResult.nonce),
 					],
 					target: `${fundsuiPackageId}::podcast::new`,
 				});

@@ -7,17 +7,17 @@ use sui::dynamic_field as df;
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 
-#[error]
-const EPodcastNotFound: vector<u8> = b"Podcast not found";
-
-#[error]
-const EPodcastAlreadyDeleted: vector<u8> = b"Podcast already deleted";
+// #[error]
+// const EPodcastNotFound: vector<u8> = b"Podcast not found";
 
 public struct Podcast has key {
     id: UID,
     source_file_uri: String,
     title: String,
     description: String,
+    file_type: String,
+    source_file_blob_id: String,
+    nouce: String,
     created_at: u64,
 }
 
@@ -26,16 +26,20 @@ public fun new(
     channel: &mut Channel,
     title: String,
     description: String,
-    source_file_uri: String,
+    source_file_blob_id: String,
+    file_type: String,
+    nouce: String, // for encryption
     ctx: &mut TxContext,
-): ID {
+): String {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
 
     let podcast = Podcast {
         id: object::new(ctx),
         source_file_uri,
         title,
+        nouce,
         description,
+        file_type,
         created_at: ctx.epoch_timestamp_ms(),
     };
 

@@ -1,8 +1,12 @@
 module fundsui::subscription;
 
 use fundsui::channel::Channel;
+use fundsui::podcast::{get_podcast};
 use sui::coin::{Self, Coin};
 use sui::sui::SUI;
+use sui::dynamic_field as df;
+use std::string::String;
+
 
 const PLATFORM_ADDRESS: address = @platform_address;
 
@@ -26,6 +30,55 @@ public struct Subscription has key, store {
     channel_id: ID,
     start_timestamp: u64,
     end_timestamp: u64,
+}
+
+// Seal access control: Check if subscription is active
+entry fun seal_approve_subscription(
+    id: vector<u8>,
+    blob_id: String,
+    subscription: &Subscription,
+    channel: &Channel,
+    ctx: &TxContext,
+) {
+    let current_time = ctx.epoch_timestamp_ms();
+    
+    // Check if subscription is still valid
+    assert!(
+        current_time <= subscription.end_timestamp,
+        ESubscriptionExpired,
+    );
+    assert!(
+        subscription.channel_id == object::id(channel),
+        EInvalidChannel,
+    );
+    assert!(
+        df::exists_(channel.borrow_uid(), blob_id),
+        EPodcastNotFound,
+    );
+
+    let podcast = get_podcast(channel, blob_id);
+    assert!(podcast.nouce() == id.to_string());
+
+}
+
+// Seal access control: Check if user owns subscription for a channel
+entry fun seal_approve_channel_access(
+    id: vector<u8>,
+    blob_id: String,
+    subscription: &Subscription,
+    channel: &Channel,
+    ctx: &TxContext,
+) {
+    let current_time = ctx.epoch_timestamp_ms();
+    
+    // Check if subscription is still valid
+    assert!(current_time <= subscription.end_timestamp, ESubscriptionExpired);
+    assert!(
+        subscription.channel_id == object::id(channel), EInvalidChannel);
+    assert!(df::exists_(channel.borrow_uid(), blob_id), EPodcastNotFound);
+
+    let podcast = get_podcast(channel, blob_id);
+    assert!(podcast.nouce() == id.to_string(), EInvalidNonce);
 }
 
 #[allow(lint(self_transfer))]
@@ -64,6 +117,9 @@ public fun new(
         coin::destroy_zero(payment);
     };
 
+    let start_time = ctx.epoch_timestamp_ms();
+    let duration_in_ms = (duration_in_months as u64) * 30 * 24 * 60 * 60 * 1000; // Approximate month in milliseconds
+    
     let subscription = Subscription {
         id: object::new(ctx),
         channel_id: object::id(channel),
