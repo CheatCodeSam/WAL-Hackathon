@@ -63,7 +63,7 @@ export default function CreateChannelPage() {
 
 				const tx = new Transaction();
 
-				const channelCap = tx.moveCall({
+				tx.moveCall({
 					arguments: [
 						tx.object(fundsuiRegistryId),
 						tx.pure.string(value.displayName),
@@ -76,8 +76,6 @@ export default function CreateChannelPage() {
 					],
 					target: `${fundsuiPackageId}::channel::new`,
 				});
-
-				tx.transferObjects([channelCap], account.address);
 
 				await mutateAsync(
 					{

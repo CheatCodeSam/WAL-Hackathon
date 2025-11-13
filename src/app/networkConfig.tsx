@@ -9,6 +9,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
 			variables: {
 				fundsuiPackageId: env.NEXT_PUBLIC_CONTRACT_ADDRESS,
 				fundsuiChannelRegistry: env.NEXT_PUBLIC_CHANNEL_REGISTRY,
+				hostingClientAddress: env.NEXT_PUBLIC_CLIENT_ADDRESS,
 			},
 		},
 		mainnet: {
@@ -16,6 +17,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
 			variables: {
 				fundsuiPackageId: env.NEXT_PUBLIC_CONTRACT_ADDRESS,
 				fundsuiChannelRegistry: env.NEXT_PUBLIC_CHANNEL_REGISTRY,
+				hostingClientAddress: env.NEXT_PUBLIC_CLIENT_ADDRESS,
 			},
 		},
 	});

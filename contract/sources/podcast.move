@@ -10,8 +10,9 @@ const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 // #[error]
 // const EPodcastNotFound: vector<u8> = b"Podcast not found";
 
-public struct Podcast has key, store {
+public struct Podcast has key {
     id: UID,
+    source_file_uri: String,
     title: String,
     description: String,
     file_type: String,
@@ -34,7 +35,7 @@ public fun new(
 
     let podcast = Podcast {
         id: object::new(ctx),
-        source_file_blob_id,
+        source_file_uri,
         title,
         nouce,
         description,
@@ -42,24 +43,14 @@ public fun new(
         created_at: ctx.epoch_timestamp_ms(),
     };
 
-    df::add(borrow_uid_mut(channel), source_file_blob_id, podcast);
+    let podcast_id = object::id(&podcast);
+    transfer::share_object(podcast);
+    df::add(borrow_uid_mut(channel), podcast_id, podcast_id);
 
-    source_file_blob_id
-}
-
-public fun get_podcast(channel: &Channel, source_file_blob_id: String): &Podcast {
-    df::borrow(borrow_uid(channel), source_file_blob_id)
-}
-
-public fun nouce(podcast: &Podcast): String {
-    podcast.nouce
+    podcast_id
 }
 
 public fun delete_podcast(cap: &ChannelCap, channel: &mut Channel, podcast_id: ID) {
     assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
-    let podcast = df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
-
-    let Podcast { id, .. } = podcast;
-
-    id.delete();
+    df::remove<_, ID>(borrow_uid_mut(channel), podcast_id);
 }

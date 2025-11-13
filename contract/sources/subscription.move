@@ -14,23 +14,16 @@ const SMART_CONTRACT_PROVIDER_TAX_OUT_OF_100: u64 = 2;
 
 const FRONTEND_PROVIDER_TAX_OUT_OF_100: u64 = 1;
 
+const MS_PER_MONTH: u64 = 2_592_000_000;
+
 #[error]
 const EPurchasingTooManyMonths: vector<u8> = b"Too many months at a time purchased";
 
 #[error]
+const ESubscribingToSelf: vector<u8> = b"Attempting to Subscribe to Self";
+
+#[error]
 const ENotEnoughFundsProvided: vector<u8> = b"Not enough funds have been provided";
-
-#[error]
-const ESubscriptionExpired: vector<u8> = b"Subscription has expired";
-
-#[error]
-const EInvalidChannel: vector<u8> = b"Subscription is not for this channel";
-
-#[error]
-const EPodcastNotFound: vector<u8> = b"Podcast not found";
-
-#[error]
-const EInvalidNonce: vector<u8> = b"Invalid nonce - access denied";
 
 public struct Subscription has key, store {
     id: UID,
@@ -101,6 +94,7 @@ public fun new(
         EPurchasingTooManyMonths,
     );
 
+    assert!(channel.get_channel_owner() != ctx.sender(), ESubscribingToSelf);
     let required_amount = channel.get_subscription_price_in_mist() * (duration_in_months as u64);
 
     assert!(coin::value(&payment) >= required_amount, ENotEnoughFundsProvided);
@@ -129,10 +123,14 @@ public fun new(
     let subscription = Subscription {
         id: object::new(ctx),
         channel_id: object::id(channel),
-        start_timestamp: start_time,
-        end_timestamp: start_time + duration_in_ms,
+        start_timestamp: ctx.epoch_timestamp_ms(),
+        end_timestamp: ctx.epoch_timestamp_ms() + calculate_duration_in_ms(duration_in_months),
     };
     subscription
+}
+
+fun calculate_duration_in_ms(months: u8): u64 {
+    (months as u64) * MS_PER_MONTH
 }
 
 // refill
