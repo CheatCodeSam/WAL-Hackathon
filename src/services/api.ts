@@ -92,8 +92,8 @@ export async function getChannelDetails(channelId: string) {
 		name: json.display_name,
 		description: json.description,
 		tag_line: json.tag_line,
-		cover_image_uri: json.cover_image_uri,
-		profile_image_uri: json.profile_image_uri,
+		cover_image_uri: json.cover_photo_uri,
+		profile_image_uri: json.profile_photo_uri,
 		subscription_price_in_mist: json.subscription_price_in_mist,
 		max_subscription_duration_in_months: json.max_subscription_duration_in_months,
 	} as Channel;
@@ -111,8 +111,8 @@ export async function getAllChannels() {
 			id: node.asMoveObject.address,
 			name: channel.name || "",
 			description: channel.description || "",
-			cover_image_uri: channel.cover_image_uri || "",
-			profile_image_uri: channel.profile_image_uri || "",
+			cover_image_uri: channel.cover_photo_uri || "",
+			profile_image_uri: channel.profile_photo_uri || "",
 			subscription_price_in_mist: channel.subscription_price_in_mist || "",
 			max_subscription_duration_in_months: channel.max_subscription_duration_in_months || "",
 		};
@@ -130,6 +130,7 @@ export async function getPodcastsByChannel(channelId: string) {
 			const podcast = node.contents.json.value;
 
 			return {
+				id: node.contents.json.id || "",
 				title: podcast.title || "",
 				description: podcast.description || "",
 				source_file_blob_id: podcast.source_file_blob_id || "",
