@@ -111,8 +111,8 @@ export async function getAllChannels() {
 			id: node.asMoveObject.address,
 			name: channel.name || "",
 			description: channel.description || "",
-			cover_image_uri: channel.cover_image_uri || "",
-			profile_image_uri: channel.profile_image_uri || "",
+			cover_image_uri: channel.cover_photo_uri || "",
+			profile_image_uri: channel.profile_photo_uri || "",
 			subscription_price_in_mist: channel.subscription_price_in_mist || "",
 			max_subscription_duration_in_months: channel.max_subscription_duration_in_months || "",
 		};

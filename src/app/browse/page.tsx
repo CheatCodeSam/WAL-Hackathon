@@ -1,256 +1,146 @@
-"use client";
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { IoSearch } from "react-icons/io5";
-import { api } from "~/trpc/react";
+'use client';
 
-interface Podcast {
-	id: string;
-	title: string;
-	description: string;
-	coverImage: string;
-	episodeCount: number;
-	channel: string;
-	category: string;
-	type: "personality" | "abstract" | "text";
-}
+import Link from 'next/link';
+import { api } from '~/trpc/react';
+import { env } from '~/env';
 
-export default function Browse() {
-	const [searchQuery, setSearchQuery] = useState("");
-	const [searchInput, setSearchInput] = useState("");
-	const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
-		undefined,
-	);
+type Channel = {
+  id: string;
+  name: string;
+  description: string;
+  cover_image_uri?: string;
+  profile_image_uri?: string;
+  subscription_price_in_mist?: string;
+  max_subscription_duration_in_months?: number;
+};
 
-	// Use the search endpoint with the current query and category
-	const {
-		data: podcasts,
-		isLoading,
-		isError,
-		error,
-	} = api.podcast.podcast.search.useQuery({
-		query: searchQuery,
-		category: selectedCategory,
-	});
+export default function BrowsePage() {
+  const { data, isLoading, error, refetch, isFetching } =
+    api.channel.channel.list.useQuery();
 
-	// Handle search button click
-	const handleSearch = () => {
-		setSearchQuery(searchInput);
-	};
+  const channels = (data ?? []) as Channel[];
 
-	// Handle Enter key press
-	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter") {
-			handleSearch();
-		}
-	};
+  return (
+    <div className="min-h-screen bg-gray-50 py-10">
+      <div className="container mx-auto px-4">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="font-bold text-3xl">Browse Channels</h1>
+          <button
+            className="rounded-md border px-4 py-2 text-sm transition-colors hover:bg-gray-100"
+            disabled={isFetching}
+            onClick={() => refetch()}
+          >
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
 
-	// Get unique categories for filter buttons
-	const categories = useMemo(() => {
-		if (!podcasts) return [];
-		return Array.from(new Set(podcasts.map((p) => p.category)));
-	}, [podcasts]);
+        {isLoading && (
+          <div className="rounded-lg border bg-white p-6 shadow-sm">
+            Loading channels…
+          </div>
+        )}
 
-	// Loading state
-	if (isLoading) {
-		return (
-			<div className="flex min-h-screen items-center justify-center bg-gray-50">
-				<div className="text-center">
-					<div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-blue-500 border-b-2"></div>
-					<div className="mb-2 font-semibold text-2xl">Loading Podcasts...</div>
-					<div className="text-gray-600">
-						Discovering amazing content for you
-					</div>
-				</div>
-			</div>
-		);
-	}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-800">
+            Failed to load channels: {error.message}
+          </div>
+        )}
 
-	// Error state
-	if (isError) {
-		return (
-			<div className="flex min-h-screen items-center justify-center bg-gray-50">
-				<div className="text-center">
-					<div className="mb-4 text-6xl">⚠️</div>
-					<div className="mb-2 font-semibold text-2xl text-red-600">
-						Error Loading Podcasts
-					</div>
-					<div className="mb-4 text-gray-600">
-						{error?.message || "Something went wrong. Please try again later."}
-					</div>
-					<button
-						className="rounded-lg bg-blue-500 px-6 py-2 text-white transition-colors hover:bg-blue-600"
-						onClick={() => window.location.reload()}
-					>
-						Retry
-					</button>
-				</div>
-			</div>
-		);
-	}
+        {!isLoading && !error && channels.length === 0 && (
+          <div className="rounded-lg border bg-white p-6 text-gray-600 shadow-sm">
+            No channels found.
+          </div>
+        )}
 
-	// No podcasts found state
-	if (!podcasts || podcasts.length === 0) {
-		return (
-			<div className="min-h-screen bg-gray-50">
-				{/* Search Section */}
-				<div className="sticky top-0 z-10 bg-white shadow-sm">
-					<div className="container mx-auto px-4 py-4">
-						<div className="relative">
-							<input
-								className="w-full rounded-lg border-none bg-gray-100 py-3 pr-4 pl-12 transition-colors focus:bg-white focus:ring-2 focus:ring-blue-500"
-								onChange={(e) => setSearchInput(e.target.value)}
-								onKeyPress={handleKeyPress}
-								placeholder="Search podcasts..."
-								type="text"
-								value={searchInput}
-							/>
-							{/* <IoSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" /> */}
-							<button
-								className="-translate-y-1/2 absolute top-1/2 right-4 transform text-gray-400 transition-colors hover:text-blue-500"
-								onClick={handleSearch}
-							>
-								<IoSearch className="text-xl" />
-							</button>
-						</div>
-					</div>
-				</div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {channels.map((ch) => {
+            const coverUrl = ch.cover_image_uri
+              ? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${ch.cover_image_uri}`
+              : undefined;
+            const profileUrl = ch.profile_image_uri
+              ? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${ch.profile_image_uri}`
+              : undefined;
 
-				{/* No results message */}
-				<div className="container mx-auto px-4 py-16 text-center">
-					<div className="mb-4 text-6xl">🔍</div>
-					<h2 className="mb-2 font-bold text-2xl">No Podcasts Found</h2>
-					<p className="mb-4 text-gray-600">
-						{searchQuery
-							? `No results for "${searchQuery}"`
-							: "Try adjusting your search or filters"}
-					</p>
-					{(searchQuery || selectedCategory) && (
-						<button
-							className="rounded-lg bg-blue-500 px-6 py-2 text-white transition-colors hover:bg-blue-600"
-							onClick={() => {
-								setSearchQuery("");
-								setSearchInput("");
-								setSelectedCategory(undefined);
-							}}
-						>
-							Clear Filters
-						</button>
-					)}
-				</div>
-			</div>
-		);
-	}
+            const priceSui = ch.subscription_price_in_mist
+              ? Number(BigInt(ch.subscription_price_in_mist)) / 1_000_000_000
+              : undefined;
 
-	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Search Section */}
-			<div className="sticky top-0 z-10 bg-white shadow-sm">
-				<div className="container mx-auto px-4 py-4">
-					<div className="relative">
-						<input
-							className="w-full rounded-lg border-none bg-gray-100 py-3 pr-4 pl-12 transition-colors focus:bg-white focus:ring-2 focus:ring-blue-500"
-							onChange={(e) => setSearchInput(e.target.value)}
-							onKeyPress={handleKeyPress}
-							placeholder="Search podcasts..."
-							type="text"
-							value={searchInput}
-						/>
-						{/* <IoSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" /> */}
-						<button
-							className="-translate-y-1/2 absolute top-1/2 right-4 transform text-gray-400 transition-colors hover:text-blue-500"
-							onClick={handleSearch}
-						>
-							<IoSearch className="text-xl" />
-						</button>
-					</div>
-				</div>
-			</div>
+            return (
+              <div
+                key={ch.id}
+                className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200"
+              >
+                {/* Cover */}
+                <div className="relative h-36 w-full bg-gray-200">
+                  {coverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt={`${ch.name} cover`}
+                      className="h-full w-full object-cover"
+                      src={coverUrl}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-gray-400">
+                      No cover image
+                    </div>
+                  )}
+                  {/* Avatar */}
+                  <div className="absolute -bottom-7 left-4 h-14 w-14 overflow-hidden rounded-full ring-2 ring-white">
+                    {profileUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        alt={`${ch.name} avatar`}
+                        className="h-full w-full object-cover"
+                        src={profileUrl}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
+                        N/A
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-			{/* Podcasts Grid */}
-			<div className="container mx-auto px-4 py-8">
-				<div className="mb-6 flex items-center justify-between">
-					<h1 className="font-bold text-2xl">
-						{searchQuery
-							? `Search Results for "${searchQuery}"`
-							: "Popular Podcasts"}
-					</h1>
-					<div className="text-gray-600">
-						{podcasts.length} {podcasts.length === 1 ? "podcast" : "podcasts"}{" "}
-						found
-					</div>
-				</div>
-
-				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-					{podcasts.map((podcast) => (
-						<Link
-							className="group"
-							href={`/${podcast.channel}/${podcast.id}`}
-							key={podcast.id}
-						>
-							<div className="overflow-hidden rounded-lg bg-white shadow-md transition-shadow duration-300 hover:shadow-lg">
-								{/* Card Header with Cover Image */}
-								<div className="relative aspect-square">
-									<img
-										alt={podcast.title}
-										className="h-full w-full object-cover"
-										src={podcast.coverImage}
-									/>
-									{/* Category Badge */}
-									<div className="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 font-medium text-sm backdrop-blur-sm">
-										{podcast.category}
-									</div>
-									{/* Episode Count Badge */}
-									<div className="absolute right-3 bottom-3 rounded-full bg-black/70 px-3 py-1 text-sm text-white">
-										{podcast.episodeCount} eps
-									</div>
-								</div>
-
-								{/* Card Content */}
-								<div className="p-4">
-									<h3 className="mb-1 font-bold text-lg transition-colors group-hover:text-blue-600">
-										{podcast.title}
-									</h3>
-									<p className="line-clamp-2 text-gray-600 text-sm">
-										{podcast.description}
-									</p>
-								</div>
-							</div>
-						</Link>
-					))}
-				</div>
-
-				{/* Categories Section */}
-				<div className="mt-12">
-					<h2 className="mb-6 font-bold text-2xl">Browse by Category</h2>
-					<div className="flex flex-wrap gap-3">
-						{/* All Categories button */}
-						<button
-							className={`rounded-full px-4 py-2 font-medium text-sm shadow-sm transition-all hover:shadow-md ${
-								selectedCategory === undefined
-									? "bg-blue-500 text-white"
-									: "bg-white text-gray-700"
-							}`}
-							onClick={() => setSelectedCategory(undefined)}
-						>
-							All
-						</button>
-						{categories.map((category) => (
-							<button
-								className={`rounded-full px-4 py-2 font-medium text-sm shadow-sm transition-all hover:shadow-md ${
-									selectedCategory === category
-										? "bg-blue-500 text-white"
-										: "bg-white text-gray-700"
-								}`}
-								key={category}
-								onClick={() => setSelectedCategory(category)}
-							>
-								{category}
-							</button>
-						))}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+                <div className="p-4 pt-8">
+                  <h2 className="mb-1 line-clamp-1 font-semibold">
+                    {ch.name || 'Untitled Channel'}
+                  </h2>
+                  <p className="mb-3 line-clamp-2 text-gray-600 text-sm">
+                    {ch.description || 'No description provided.'}
+                  </p>
+                  <div className="mb-4 flex items-center gap-3 text-gray-500 text-sm">
+                    {priceSui !== undefined && (
+                      <span>
+                        Price:{' '}
+                        <span className="font-medium">
+                          {priceSui.toFixed(4)} SUI
+                        </span>
+                      </span>
+                    )}
+                    {ch.max_subscription_duration_in_months !== undefined && (
+                      <span>
+                        Max: {ch.max_subscription_duration_in_months} mo
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {/* Placeholder actions; wire to real routes when available */}
+                    <Link
+                      className="rounded-md bg-blue-600 px-3 py-2 text-white text-sm transition-colors hover:bg-blue-700"
+                      href={`/subscribe`}
+                    >
+                      Subscribe
+                    </Link>
+                    <div className="text-gray-400 text-xs">
+                      ID: {ch.id.slice(0, 6)}…{ch.id.slice(-4)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
