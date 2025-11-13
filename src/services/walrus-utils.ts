@@ -4,12 +4,12 @@
  */
 
 import {
-	uploadQuilt,
+	uploadData,
 	uploadToWalrus,
 	type WalrusUploadResponse,
 } from "./walrus";
 import type { EncryptOptions } from "~/app/SealProvider";
-
+import { fromBase64, toBase64 } from "@mysten/sui/utils";
 /**
  * Validates a file before upload
  */
@@ -94,63 +94,7 @@ export async function uploadAudio(
 	});
 }
 
-/**
- * Upload a podcast episode (cover + audio) as a quilt
- */
-export async function uploadPodcastEpisode(
-	coverImage: File,
-	audioFile: File,
-	options: {
-		epochs?: number;
-		deletable?: boolean;
-	} = {},
-): Promise<{
-	quiltId: string;
-	coverUrl: string;
-	audioUrl: string;
-}> {
-	// Validate both files
-	const coverValidation = validateFile(coverImage, {
-		allowedTypes: ["image/"],
-	});
-	if (!coverValidation.valid) {
-		throw new Error(`Cover image: ${coverValidation.error}`);
-	}
 
-	const audioValidation = validateFile(audioFile, {
-		allowedTypes: ["audio/"],
-	});
-	if (!audioValidation.valid) {
-		throw new Error(`Audio file: ${audioValidation.error}`);
-	}
-
-	// Upload as quilt
-	const result = await uploadQuilt(
-		{
-			cover: coverImage,
-			audio: audioFile,
-		},
-		{
-			epochs: options.epochs ?? 10,
-			deletable: options.deletable ?? false,
-		},
-	);
-
-	const coverUrl =
-		result.patches.find((p) => p.identifier === "cover")?.url || "";
-	const audioUrl =
-		result.patches.find((p) => p.identifier === "audio")?.url || "";
-
-	if (!coverUrl || !audioUrl) {
-		throw new Error("Failed to retrieve URLs from quilt upload");
-	}
-
-	return {
-		quiltId: result.quiltId,
-		coverUrl,
-		audioUrl,
-	};
-}
 
 /**
  * Format file size for display
@@ -273,7 +217,6 @@ export async function uploadEncryptedAudio(
 	blobId: string;
 	url: string;
 	nonce: string;
-	size: number;
 }> {
 	// 1. Validate the audio file
 	const validation = validateFile(file, {
@@ -301,20 +244,8 @@ export async function uploadEncryptedAudio(
 		threshold: 2, // Require 2 key servers for decryption
 	});
 
-	// 6. Create a new File object from encrypted data
-	const encryptedFile = new File(
-		[new Uint8Array(encryptedObject)],
-		`${file.name}.encrypted`,
-		{
-			type: "application/octet-stream",
-		},
-	);
-
 	// 7. Upload encrypted file to Walrus
-	const uploadResult = await uploadToWalrus(encryptedFile, {
-		epochs: options.epochs ?? 10,
-		deletable: options.deletable ?? false,
-	});
+	const uploadResult = await uploadData(toBase64(encryptedObject))
 
 	// 8. Return upload result with nonce for on-chain storage
 	return {

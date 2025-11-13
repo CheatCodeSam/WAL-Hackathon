@@ -28,7 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 						packageId={env.NEXT_PUBLIC_CONTRACT_ADDRESS}
 						suiClient={suiClient}
 						network="testnet"
-						autoInitSession={false}
+						autoInitSession={true}
 						defaultThreshold={2}
 					>
 						<TRPCReactProvider>{children}</TRPCReactProvider>

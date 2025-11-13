@@ -4,6 +4,7 @@ import { useNetworkVariable } from "~/app/networkConfig";
 import { useSuiClient, useCurrentAccount } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { env } from "~/env";
+import { fromBase64 } from "@mysten/sui/utils";
 
 export interface DecryptAudioOptions {
   blobId: string;
@@ -99,7 +100,7 @@ export function useSealAudioPlayer() {
         console.log("✅ Subscription verified successfully");
       } catch (devInspectError) {
         const errorMsg = devInspectError instanceof Error ? devInspectError.message : String(devInspectError);
-        
+
         // Parse common error messages
         if (errorMsg.includes("ESubscriptionExpired")) {
           throw new Error("Your subscription has expired. Please renew to access this content.");
@@ -112,8 +113,6 @@ export function useSealAudioPlayer() {
         } else {
           throw new Error(`Subscription verification failed: ${errorMsg}`);
         }
-
-        throw new Error(`Subscription verification failed: ${errorMsg}`);
       }
 
       // 3. Fetch encrypted audio from Walrus (only after verification succeeds)
@@ -125,7 +124,7 @@ export function useSealAudioPlayer() {
         throw new Error(`Failed to fetch encrypted audio: ${response.status}`);
       }
 
-      const encryptedData = new Uint8Array(await response.arrayBuffer());
+      const encryptedData = fromBase64(await response.text());
 
       // 4. Build the transaction bytes for decryption (doesn't execute it)
       const txBytes = await tx.build({ client: suiClient, onlyTransactionKind: true });
@@ -157,7 +156,7 @@ export function useSealAudioPlayer() {
   /**
    * Decrypt audio for channel access (less restrictive)
    */
-  const decryptChannelAudio = async (
+  const decryptAudio = async (
     blobId: string,
     nonce: string,
     channelId: string,
@@ -207,7 +206,7 @@ export function useSealAudioPlayer() {
         console.log("✅ Channel access verified successfully");
       } catch (devInspectError) {
         const errorMsg = devInspectError instanceof Error ? devInspectError.message : String(devInspectError);
-        
+
         // Parse common error messages
         if (errorMsg.includes("ESubscriptionExpired")) {
           throw new Error("Your subscription has expired. Please renew to access this content.");
@@ -224,14 +223,14 @@ export function useSealAudioPlayer() {
 
       // 3. Fetch encrypted audio from Walrus (only after verification succeeds)
       console.log("Fetching encrypted audio from Walrus...");
-  const walrusUrl = `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${blobId}`;
+      const walrusUrl = `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${blobId}`;
       const response = await fetch(walrusUrl);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch encrypted audio: ${response.status}`);
       }
 
-      const encryptedData = new Uint8Array(await response.arrayBuffer());
+      const encryptedData = fromBase64(await response.text());
 
       // 4. Build transaction bytes for decryption
       const txBytes = await tx.build({ client: suiClient, onlyTransactionKind: true });
@@ -269,7 +268,7 @@ export function useSealAudioPlayer() {
 
   return {
     decryptAndPlayAudio,
-    decryptChannelAudio,
+    // decryptChannelAudio,
     revokeAudioUrl,
     isDecrypting,
     error,

@@ -1,16 +1,10 @@
-/**
- * Walrus Storage Service
- * Handles file uploads to Walrus and provides access URLs
- * Documentation: https://docs.wal.app/usage/web-api.html
- */
-
 import { env } from "~/env";
 
 export interface WalrusUploadResponse {
 	blobId: string;
 	url: string;
-	size: number;
 	certifiedEpoch?: number;
+	size?: number;
 }
 
 interface WalrusNewlyCreatedResponse {
@@ -92,6 +86,7 @@ export async function uploadToWalrus(
 			},
 		});
 
+
 		if (!response.ok) {
 			const errorText = await response.text();
 			throw new Error(
@@ -129,6 +124,72 @@ export async function uploadToWalrus(
 	}
 }
 
+export async function uploadData(
+	data: string,
+	options: {
+		epochs?: number;
+		deletable?: boolean;
+		permanent?: boolean;
+	} = {},
+): Promise<WalrusUploadResponse> {
+	const { epochs = 5, deletable = true, permanent = false } = options;
+
+	// Build query parameters
+	const params = new URLSearchParams();
+	params.append("epochs", epochs.toString());
+
+	if (permanent) {
+		params.append("permanent", "true");
+	} else if (deletable) {
+		params.append("deletable", "true");
+	}
+
+	const publisherUrl = `${env.NEXT_PUBLIC_WALRUS_PUBLISHER}/v1/blobs?${params.toString()}`;
+
+	try {
+		// Upload the file to Walrus publisher
+		const response = await fetch(publisherUrl, {
+			method: 'PUT',
+			body: data,
+		});
+
+
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(
+				`Walrus upload failed: ${response.status} - ${errorText}`,
+			);
+		}
+
+		const result = (await response.json()) as WalrusStoreResponse;
+
+		// Extract blob ID from response
+		let blobId: string;
+		if ("newlyCreated" in result) {
+			blobId = result.newlyCreated.blobObject.blobId;
+		} else if ("alreadyCertified" in result) {
+			blobId = result.alreadyCertified.blobId;
+		} else {
+			throw new Error("Unexpected Walrus response format");
+		}
+
+		// Generate access URL using aggregator
+		const accessUrl = getWalrusUrl(blobId);
+
+		return {
+			blobId,
+			url: accessUrl,
+			certifiedEpoch:
+				"newlyCreated" in result
+					? (result.newlyCreated.blobObject.certifiedEpoch ?? undefined)
+					: undefined,
+		};
+	} catch (error) {
+		console.error("Error uploading to Walrus:", error);
+		throw error;
+	}
+}
 /**
  * Generates the access URL for a blob stored in Walrus
  * @param blobId - The blob ID returned from upload
@@ -138,75 +199,6 @@ export function getWalrusUrl(blobId: string): string {
 	return `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${blobId}`;
 }
 
-/**
- * Uploads multiple files as a Walrus Quilt
- * @param files - Object mapping identifiers to files
- * @param options - Upload options
- * @returns Upload response with quilt ID and patch IDs
- */
-export async function uploadQuilt(
-	files: Record<string, File>,
-	options: {
-		epochs?: number;
-		deletable?: boolean;
-	} = {},
-): Promise<{
-	quiltId: string;
-	patches: Array<{ identifier: string; patchId: string; url: string }>;
-}> {
-	const { epochs = 5, deletable = true } = options;
-
-	const params = new URLSearchParams();
-	params.append("epochs", epochs.toString());
-	if (deletable) {
-		params.append("deletable", "true");
-	}
-
-	const publisherUrl = `${env.NEXT_PUBLIC_WALRUS_PUBLISHER}/v1/quilts?${params.toString()}`;
-
-	// Create FormData with files
-	const formData = new FormData();
-	for (const [identifier, file] of Object.entries(files)) {
-		formData.append(identifier, file);
-	}
-
-	try {
-		const response = await fetch(publisherUrl, {
-			method: "PUT",
-			body: formData,
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(
-				`Walrus quilt upload failed: ${response.status} - ${errorText}`,
-			);
-		}
-
-		const data = await response.json();
-
-		const quiltId =
-			"newlyCreated" in data.blobStoreResult
-				? data.blobStoreResult.newlyCreated.blobObject.blobId
-				: data.blobStoreResult.alreadyCertified.blobId;
-
-		const patches = data.storedQuiltBlobs.map(
-			(blob: { identifier: string; quiltPatchId: string }) => ({
-				identifier: blob.identifier,
-				patchId: blob.quiltPatchId,
-				url: `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/by-quilt-patch-id/${blob.quiltPatchId}`,
-			}),
-		);
-
-		return {
-			quiltId,
-			patches,
-		};
-	} catch (error) {
-		console.error("Error uploading quilt to Walrus:", error);
-		throw error;
-	}
-}
 
 /**
  * Checks if a Walrus blob exists and is accessible

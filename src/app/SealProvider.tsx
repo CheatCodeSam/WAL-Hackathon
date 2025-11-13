@@ -223,11 +223,16 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 			if (!client) throw new Error("Seal SDK not initialized");
 			if (!sessionKey) throw new Error("Session key not initialized");
 
-			return await client.decrypt({
+			const data =  await client.decrypt({
 				data: ciphertext,
 				sessionKey,
 				txBytes: opts.txBytes,
+
+				checkLEEncoding: false,
+        checkShareConsistency: false
 			});
+
+			return data
 		};
 	}, [client, sessionKey]);
 
