@@ -6,10 +6,10 @@ import {
 	useSuiClient,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
-import { duration } from "drizzle-orm/gel-core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
 import { api } from "~/trpc/react";
+import { useSearchParams } from "next/navigation";
 
 interface ChannelData {
 	id: string;
@@ -28,6 +28,8 @@ export default function SubscribePage() {
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
+	const searchParams = useSearchParams();
+
 	const [channelId, setChannelId] = useState("");
 	const [durationMonths, setDurationMonths] = useState(1);
 	const [frontendAddress, setFrontendAddress] = useState(
@@ -39,9 +41,25 @@ export default function SubscribePage() {
 	const [purchaseStatus, setPurchaseStatus] = useState("");
 	const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
 
-	const channelQuery = api.podcast.channel.byId.useQuery(channelId, {
+	const channelQuery = api.channel.channel.byId.useQuery(channelId, {
 		enabled: false,
 	});
+
+	// Initialize channelId from ?channelId=… and auto-fetch once
+	useEffect(() => {
+		const qp = searchParams.get("channelId");
+		if (qp && !channelId) {
+			setChannelId(qp);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams]);
+
+	useEffect(() => {
+		if (channelId && !channel && !channelQuery.isFetching) {
+			void handleFetchChannel();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [channelId]);
 
 	// Fetch channel data
 	const handleFetchChannel = async () => {

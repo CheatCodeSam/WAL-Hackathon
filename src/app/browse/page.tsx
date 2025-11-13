@@ -127,9 +127,9 @@ export default function BrowsePage() {
                     {/* Placeholder actions; wire to real routes when available */}
                     <Link
                       className="rounded-md bg-blue-600 px-3 py-2 text-white text-sm transition-colors hover:bg-blue-700"
-                      href={`/subscribe`}
+                      href={`/subscribe?channelId=${ch.id}`}
                     >
-                      Subscribe
+                      Subcribe
                     </Link>
                     <div className="text-gray-400 text-xs">
                       ID: {ch.id.slice(0, 6)}…{ch.id.slice(-4)}

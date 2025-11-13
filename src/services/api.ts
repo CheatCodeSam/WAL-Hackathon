@@ -92,8 +92,8 @@ export async function getChannelDetails(channelId: string) {
 		name: json.display_name,
 		description: json.description,
 		tag_line: json.tag_line,
-		cover_image_uri: json.cover_image_uri,
-		profile_image_uri: json.profile_image_uri,
+		cover_image_uri: json.cover_photo_uri,
+		profile_image_uri: json.profile_photo_uri,
 		subscription_price_in_mist: json.subscription_price_in_mist,
 		max_subscription_duration_in_months: json.max_subscription_duration_in_months,
 	} as Channel;
