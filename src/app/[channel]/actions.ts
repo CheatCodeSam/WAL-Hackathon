@@ -1,6 +1,5 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { err, ok, type Result } from "neverthrow";
-import { suiClient } from "~/server/sui";
 
 export type ChannelSubscribeError = { type: "TRANSACTION_ERROR"; msg: string };
 

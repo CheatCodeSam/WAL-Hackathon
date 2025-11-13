@@ -7,8 +7,8 @@ import { useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import type { ChannelViewInterface } from "~/services/backend/channel/lookupChannel";
 import { api } from "~/trpc/react";
-import { subscribeToChannel } from "../machines/subscribeButtonState";
 import { useNetworkVariable } from "../networkConfig";
+import { subscribeToChannel } from "./actions";
 import { useChannelPageStore } from "./store";
 
 export interface ChannelPageViewProps {
@@ -23,7 +23,6 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
-	// Zustand store
 	const {
 		status,
 		action,
