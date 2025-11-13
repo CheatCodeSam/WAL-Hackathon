@@ -130,6 +130,7 @@ export async function getPodcastsByChannel(channelId: string) {
 			const podcast = node.contents.json.value;
 
 			return {
+				id: node.contents.json.id || "",
 				title: podcast.title || "",
 				description: podcast.description || "",
 				source_file_blob_id: podcast.source_file_blob_id || "",

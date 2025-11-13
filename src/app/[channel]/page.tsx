@@ -5,6 +5,7 @@ import { api } from '~/trpc/react';
 import { env } from '~/env';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import ChannelPodcasts from './ChannelPodcasts';
 
 type ChannelDetails = {
   id: string;
@@ -108,6 +109,9 @@ export default function ChannelPage() {
                 <p className="text-gray-700">
                   {ch.description || 'No description provided.'}
                 </p>
+              </div>
+              <div className="mt-6">
+                <ChannelPodcasts channelId={channelId} />
               </div>
             </div>
             <div className="space-y-4">
