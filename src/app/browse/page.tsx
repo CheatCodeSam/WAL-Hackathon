@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { api } from '~/trpc/react';
 import { env } from '~/env';
+import { useRouter } from 'next/navigation';
 
 type Channel = {
   id: string;
@@ -15,6 +16,7 @@ type Channel = {
 };
 
 export default function BrowsePage() {
+  const router = useRouter();
   const { data, isLoading, error, refetch, isFetching } =
     api.channel.channel.list.useQuery();
 
@@ -68,15 +70,24 @@ export default function BrowsePage() {
             return (
               <div
                 key={ch.id}
-                className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200"
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/${ch.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/${ch.id}`);
+                  }
+                }}
+                className="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 {/* Cover */}
-                <div className="relative h-36 w-full bg-gray-200">
+                <div className="relative h-36 w-full overflow-hidden bg-gray-200">
                   {coverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       alt={`${ch.name} cover`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full transform object-cover transition-transform duration-300 group-hover:scale-105"
                       src={coverUrl}
                     />
                   ) : (
@@ -124,13 +135,16 @@ export default function BrowsePage() {
                     )}
                   </div>
                   <div className="flex items-center justify-between">
-                    {/* Placeholder actions; wire to real routes when available */}
-                    <Link
+                    <button
                       className="rounded-md bg-blue-600 px-3 py-2 text-white text-sm transition-colors hover:bg-blue-700"
-                      href={`/subscribe?channelId=${ch.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/subscribe?channelId=${ch.id}`);
+                      }}
+                      type="button"
                     >
-                      Subcribe
-                    </Link>
+                      Subscribe
+                    </button>
                     <div className="text-gray-400 text-xs">
                       ID: {ch.id.slice(0, 6)}…{ch.id.slice(-4)}
                     </div>
