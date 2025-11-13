@@ -9,7 +9,7 @@ const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
 #[error]
 const EChannelAlreadyExists: vector<u8> = b"Channel already exists for this address";
 
-public struct Channel has key {
+public struct Channel has key, store {
     id: UID,
     owner: address,
     display_name: String,
@@ -25,7 +25,7 @@ public struct ChannelRegistry has key {
     id: UID,
 }
 
-public struct ChannelCap has key {
+public struct ChannelCap has key, store {
     id: UID,
     channel: ID,
 }
@@ -59,7 +59,7 @@ public fun new(
     subscription_price_in_mist: u64,
     max_subscription_duration_in_months: u8,
     ctx: &mut TxContext,
-): ID {
+): ChannelCap {
     let sender = ctx.sender();
 
     assert!(!df::exists_(&registry.id, sender), EChannelAlreadyExists);
@@ -85,10 +85,9 @@ public fun new(
 
     df::add(&mut registry.id, sender, channel_id);
 
-    let channel_cap_id = object::id(&channel_cap);
-    transfer::share_object(channel);
-    transfer::transfer(channel_cap, sender);
-    channel_cap_id
+    transfer::public_share_object(channel);
+
+    channel_cap
 }
 
 public fun get_channel_id_for_address(registry: &ChannelRegistry, addr: address): Option<ID> {
