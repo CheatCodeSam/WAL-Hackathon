@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { uploadImage } from "~/services/walrus-utils";
 import { useNetworkVariable } from "../networkConfig";
 import { getUserDetails } from "~/services/api";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function CreateChannelPage() {
@@ -21,6 +21,9 @@ export default function CreateChannelPage() {
 	const { mutateAsync } = useSignAndExecuteTransaction();
 	const router = useRouter();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const rawReturnTo = searchParams?.get('returnTo') || null;
+	const safeReturnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') && !/^[a-zA-Z]+:/.test(rawReturnTo) && rawReturnTo.length <= 200 ? rawReturnTo : null;
 
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState<string>("");
@@ -136,6 +139,12 @@ export default function CreateChannelPage() {
 									}
 
 									if (channelId) {
+										// If we have an originating returnTo, prefer returning there
+										if (safeReturnTo) {
+											setUploadProgress("Channel created successfully! Redirecting...");
+											router.replace(safeReturnTo);
+											return;
+										}
 										setUploadProgress("Channel created successfully! Redirecting...");
 										router.push(`/${channelId}`);
 									} else {
