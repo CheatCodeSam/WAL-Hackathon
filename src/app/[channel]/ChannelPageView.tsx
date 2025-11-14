@@ -3,6 +3,7 @@ import {
 	useCurrentAccount,
 	useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
+import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import type { ChannelViewInterface } from "~/services/backend/channel/lookupChannel";
@@ -23,6 +24,8 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
+	const isOwner = account?.address === channel.owner;
+
 	const {
 		status,
 		action,
@@ -30,6 +33,7 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		canSubscribe,
 		canUnsubscribe,
 		isLoading,
+		setIsOwner,
 		setNoWallet,
 		startChecking,
 		setSubscribed,
@@ -47,6 +51,11 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		account?.address ?? "",
 		{ enabled: !!account?.address },
 	);
+
+	// Sync owner status with Zustand store
+	useEffect(() => {
+		setIsOwner(isOwner);
+	}, [isOwner, setIsOwner]);
 
 	// Sync subscription check status with Zustand store
 	useEffect(() => {
@@ -156,20 +165,30 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
 				<h1 className="mb-6 font-bold text-3xl">Channel Details</h1>
 				<div className="space-y-4">
-					<Button
-						className="cursor-pointer"
-						disabled={isLoading()}
-						onClick={handleButtonClick}
-						type="button"
-					>
-						{getButtonText()}
-					</Button>
+					<div className="flex gap-4">
+						<Button
+							className="cursor-pointer"
+							disabled={isLoading() || isOwner}
+							onClick={handleButtonClick}
+							type="button"
+						>
+							{getButtonText()}
+						</Button>
+						{isOwner && (
+							<Link href="/upload">
+								<Button className="cursor-pointer" type="button">
+									Upload New Episode
+								</Button>
+							</Link>
+						)}
+					</div>
 					{error && <p className="text-red-600 text-sm">Error: {error}</p>}
 					<div className="border-gray-300 border-t pt-4 text-gray-600 text-xs">
 						<p>Status: {status}</p>
 						<p>Action: {action}</p>
 						<p>Can Subscribe: {canSubscribe() ? "Yes" : "No"}</p>
 						<p>Can Unsubscribe: {canUnsubscribe() ? "Yes" : "No"}</p>
+						<p>Is Owner: {isOwner ? "Yes" : "No"}</p>
 					</div>
 				</div>
 				<div className="space-y-4">

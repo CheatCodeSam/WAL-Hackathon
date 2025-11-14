@@ -17,10 +17,12 @@ export interface ChannelPageState {
 	status: SubscriptionStatus;
 	action: SubscriptionAction;
 	error: string | null;
+	isOwner: boolean;
 	canSubscribe: () => boolean;
 	canUnsubscribe: () => boolean;
 	isLoading: () => boolean;
 
+	setIsOwner: (isOwner: boolean) => void;
 	setNoWallet: () => void;
 	startChecking: () => void;
 	setSubscribed: () => void;
@@ -42,11 +44,12 @@ export const useChannelPageStore = create<ChannelPageState>((set, get) => ({
 	status: "no_wallet",
 	action: "none",
 	error: null,
+	isOwner: false,
 
 	// Computed properties
 	canSubscribe: () => {
-		const { status, action } = get();
-		return status === "not_subscribed" && action === "none";
+		const { status, action, isOwner } = get();
+		return status === "not_subscribed" && action === "none" && !isOwner;
 	},
 
 	canUnsubscribe: () => {
@@ -58,6 +61,12 @@ export const useChannelPageStore = create<ChannelPageState>((set, get) => ({
 		const { status, action } = get();
 		return status === "checking" || action !== "none";
 	},
+
+	// Owner status action
+	setIsOwner: (isOwner: boolean) =>
+		set({
+			isOwner,
+		}),
 
 	// Wallet status actions
 	setNoWallet: () =>
