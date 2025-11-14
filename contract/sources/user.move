@@ -3,6 +3,7 @@ module fundsui::user;
 // use std::string::String;
 use sui::bag::{Self, Bag};
 use sui::dynamic_field as df;
+use std::string::String;
 
 #[error]
 const EUserAlreadyExists: vector<u8> = b"user already exists for this address";
@@ -32,27 +33,34 @@ fun init(ctx: &mut TxContext) {
 
 public struct User has key {
   id: UID,
+  username: String,
   channel: option::Option<ID>,
   subscriptions: Bag,
 }
 
 public fun new(
   registry: &mut UserRegistry,
+  username: String,
   ctx: &mut TxContext,
-): User {
+): ID {
   let sender = ctx.sender();
 
   assert!(!df::exists_(&registry.id, sender), EUserAlreadyExists);
 
   let user = User {
     id: object::new(ctx),
+    username,
     channel: option::none<ID>(),
     subscriptions: bag::new(ctx),
   };
 
+  let user_id = object::id(&user);
+
   df::add(&mut registry.id, sender, object::id(&user));
 
-  user
+  transfer::transfer(user, ctx.sender());
+
+  user_id
 }
 
 
