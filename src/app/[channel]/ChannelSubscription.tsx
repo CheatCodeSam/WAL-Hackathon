@@ -136,7 +136,12 @@ export function ChannelSubscription({
             You are subscribed to this channel.
           </div>
         ) : (
-          <SubscribeButton channelId={channelId} userId={user?.id || ''} />
+          <SubscribeButton
+            channelId={channelId}
+            userId={user?.id || ''}
+            subscriptionPriceMist={subscriptionPriceMist}
+            durationMonths={3}
+          />
         )}
       </div>
     </div>

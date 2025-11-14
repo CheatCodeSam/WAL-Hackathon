@@ -55,21 +55,13 @@ export default function ChannelPodcasts({ channelId }: Props) {
                   </div>
                 </div>
                 <div className="ml-4 shrink-0">
-                  {id ? (
-                    <Link
-                      className="rounded-md bg-blue-600 px-3 py-2 text-white text-sm hover:bg-blue-700"
-                      href={`/${channelId}/${id}`}
-                    >
-                      View
-                    </Link>
-                  ) : (
                     <button
                       disabled
                       className="rounded-md bg-gray-200 px-3 py-2 text-sm text-gray-500"
                     >
-                      No ID
+                      Play
                     </button>
-                  )}
+                  
                 </div>
               </div>
             </li>

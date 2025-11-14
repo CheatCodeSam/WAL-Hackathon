@@ -12,6 +12,8 @@ import { useNetworkVariable } from "../networkConfig";
 interface SubscribeButtonProps {
 	channelId: string;
 	userId: string;
+	subscriptionPriceMist?: string; // price per month in mist (1e-9 SUI)
+	durationMonths?: number; // optional, defaults to 3 months
 }
 
 export function SubscribeButton(props: SubscribeButtonProps) {
@@ -19,14 +21,24 @@ export function SubscribeButton(props: SubscribeButtonProps) {
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
+	const duration = props.durationMonths ?? 3;
+	const pricePerMonthMist = props.subscriptionPriceMist
+		? BigInt(props.subscriptionPriceMist)
+		: 0n;
+	const totalPaymentMist = pricePerMonthMist * BigInt(duration);
+
+	const disabled = totalPaymentMist <= 0n;
+
 	return (
 		<Button
 			className="cursor-pointer"
+			disabled={disabled}
 			onClick={() => {
 				subscribeToChannel(
 					props.userId,
 					props.channelId,
-					3,
+					duration,
+					totalPaymentMist,
 					hostingClientAddress,
 					fundsuiPackageId,
 					mutateAsync,
@@ -34,7 +46,7 @@ export function SubscribeButton(props: SubscribeButtonProps) {
 			}}
 			type="button"
 		>
-			Subscribe
+			{disabled ? "Unavailable" : "Subscribe"}
 		</Button>
 	);
 }
