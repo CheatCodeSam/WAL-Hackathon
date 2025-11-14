@@ -21,14 +21,6 @@ public struct Channel has key, store {
     max_subscription_duration_in_months: u8,
 }
 
-public struct ChannelCap has key, store {
-    id: UID,
-    channel: ID,
-}
-
-public fun channel_id(cap: &ChannelCap): ID {
-    cap.channel
-}
 
 public(package) fun borrow_uid_mut(channel: &mut Channel): &mut UID {
     &mut channel.id
@@ -49,10 +41,10 @@ public fun new(
     subscription_price_in_mist: u64,
     max_subscription_duration_in_months: u8,
     ctx: &mut TxContext,
-): ChannelCap {
+): ID {
     let sender = ctx.sender();
 
-    assert!(!user.has_channel_cap(), EChannelAlreadyExists);
+    assert!(!user.has_channel(), EChannelAlreadyExists);
 
     let channel = Channel {
         id: object::new(ctx),
@@ -68,20 +60,15 @@ public fun new(
 
     let channel_id = object::id(&channel);
 
-    let channel_cap = ChannelCap {
-        id: object::new(ctx),
-        channel: channel_id,
-    };
-
-    user.set_channel_cap(object::id(&channel_cap));
+    user.set_channel(channel_id);
 
     transfer::public_share_object(channel);
 
-    channel_cap
+    channel_id
 }
 
 public fun update_channel(
-    cap: &ChannelCap,
+    user: &User,
     channel: &mut Channel,
     display_name: String,
     tag_line: String,
@@ -91,7 +78,8 @@ public fun update_channel(
     subscription_price_in_mist: u64,
     max_subscription_duration_in_months: u8,
 ) {
-    assert!(object::id(channel) == cap.channel, EUnauthorizedAccess);
+
+    assert!(object::id(channel) == user.get_channel(), EUnauthorizedAccess);
 
     channel.display_name = display_name;
     channel.tag_line = tag_line;

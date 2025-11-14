@@ -1,6 +1,6 @@
 module fundsui::subscription;
 
-use fundsui::channel::{Channel, ChannelCap};
+use fundsui::channel::Channel;
 use fundsui::podcast::get_podcast;
 use fundsui::user::User;
 use std::string::String;
@@ -38,7 +38,7 @@ const EInvalidNonce: vector<u8> = b"Invalid nonce - access denied";
 #[error]
 const ESubscriptionNotExpired: vector<u8> = b"Subscription has NOT expired";
 
-public struct Subscription has key, store {
+public struct Subscription has key {
     id: UID,
     channel_id: ID,
     start_timestamp: u64,
@@ -69,10 +69,10 @@ entry fun seal_approve_channel_access(
     id: vector<u8>,
     blob_id: String,
     channel: &Channel,
-    channel_cap: &ChannelCap,
+    user: &User,
 ) {
     // Check if subscription is still valid
-    assert!(channel_cap.channel_id() == object::id(channel), EInvalidChannel);
+    assert!(user.get_channel() == object::id(channel), EInvalidChannel);
     assert!(df::exists_(channel.borrow_uid(), blob_id), EPodcastNotFound);
 
     let podcast = get_podcast(channel, blob_id);
@@ -87,7 +87,7 @@ public fun new(
     frontend_address: address,
     mut payment: Coin<SUI>,
     ctx: &mut TxContext,
-): Subscription {
+): ID {
     let channel_id = object::id(channel);
 
     assert!(!user.has_subscription(channel_id), ESubscriptionAlreadyExists);
@@ -128,8 +128,11 @@ public fun new(
         end_timestamp: start_time + duration_in_ms,
     };
 
-    user.add_subscription(object::id(channel), object::id(&subscription));
-    subscription
+    let subscription_id = object::id(&subscription);
+    user.add_subscription(object::id(channel), subscription_id);
+    transfer::transfer(subscription, ctx.sender());
+
+    subscription_id
 }
 
 // refill
@@ -193,7 +196,7 @@ public fun delete(subscription: Subscription, user: &mut User, channel: &Channel
     // remove subscription reference from user
     user.remove_subscription(channel_id);
 
-    let Subscription {id, .. } = subscription;
+    let Subscription { id, .. } = subscription;
 
     id.delete();
 }

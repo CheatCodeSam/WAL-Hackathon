@@ -1,8 +1,10 @@
 module fundsui::podcast;
 
-use fundsui::channel::{Channel, ChannelCap, channel_id, borrow_uid_mut, borrow_uid};
+use fundsui::channel::{Channel, borrow_uid_mut, borrow_uid};
 use std::string::String;
 use sui::dynamic_field as df;
+use fundsui::user::User;
+
 
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
@@ -21,7 +23,7 @@ public struct Podcast has key, store {
 }
 
 public fun new(
-    cap: &ChannelCap,
+    user: &User,
     channel: &mut Channel,
     title: String,
     description: String,
@@ -30,7 +32,7 @@ public fun new(
     nouce: String, // for encryption
     ctx: &mut TxContext,
 ): String {
-    assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
+    assert!(object::id(channel) == user.get_channel(), EUnauthorizedAccess);
 
     let podcast = Podcast {
         id: object::new(ctx),
@@ -55,8 +57,8 @@ public fun nouce(podcast: &Podcast): String {
     podcast.nouce
 }
 
-public fun delete_podcast(cap: &ChannelCap, channel: &mut Channel, podcast_id: ID) {
-    assert!(object::id(channel) == channel_id(cap), EUnauthorizedAccess);
+public fun delete_podcast(user: &User, channel: &mut Channel, podcast_id: ID) {
+    assert!(object::id(channel) == user.get_channel(), EUnauthorizedAccess);
     let podcast = df::remove<_, Podcast>(borrow_uid_mut(channel), podcast_id);
 
     let Podcast { id, .. } = podcast;

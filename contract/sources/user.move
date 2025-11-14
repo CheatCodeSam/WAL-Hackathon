@@ -16,6 +16,9 @@ const ESubscriptionAlreadyExists: vector<u8> = b"subscription already exists";
 #[error]
 const ESubscriptionNotFound: vector<u8> = b"subscription not found";
 
+#[error]
+const EChannelNotFound: vector<u8> = b"channel not set";
+
 public struct UserRegistry has key {
   id: UID
 }
@@ -29,7 +32,7 @@ fun init(ctx: &mut TxContext) {
 
 public struct User has key {
   id: UID,
-  channel_cap: option::Option<ID>,
+  channel: option::Option<ID>,
   subscriptions: Bag,
 }
 
@@ -43,7 +46,7 @@ public fun new(
 
   let user = User {
     id: object::new(ctx),
-    channel_cap: option::none<ID>(),
+    channel: option::none<ID>(),
     subscriptions: bag::new(ctx),
   };
 
@@ -53,9 +56,14 @@ public fun new(
 }
 
 
-public(package) fun set_channel_cap(user: &mut User, cap_id: ID) {
-  assert!(option::is_none<ID>(&user.channel_cap), EChannelCapAlreadySet);
-  user.channel_cap = option::some<ID>(cap_id);
+public(package) fun set_channel(user: &mut User, channel: ID) {
+  assert!(option::is_none<ID>(&user.channel), EChannelCapAlreadySet);
+  user.channel = option::some<ID>(channel);
+}
+
+public fun get_channel(user: &User): &ID {
+  assert!(option::is_some<ID>(&user.channel), EChannelNotFound);
+  option::borrow<ID>(&user.channel)
 }
 
 public fun add_subscription(user: &mut User, channelId: ID, subscriptionId: ID) {
@@ -73,6 +81,6 @@ public fun has_subscription(user: &User, channelId: ID): bool {
   bag::contains(&user.subscriptions, channelId)
 }
 
-public fun has_channel_cap(user: &User): bool {
-  option::is_some<ID>(&user.channel_cap)
+public fun has_channel(user: &User): bool {
+  option::is_some<ID>(&user.channel)
 }
