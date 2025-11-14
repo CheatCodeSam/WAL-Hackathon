@@ -7,19 +7,24 @@ import {
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { uploadImage } from "~/services/walrus-utils";
 import { useNetworkVariable } from "../networkConfig";
+import { getUserDetails } from "~/services/api";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function CreateChannelPage() {
 	const account = useCurrentAccount()!;
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
-	const fundsuiRegistryId = useNetworkVariable("fundsuiChannelRegistry");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
+	const router = useRouter();
+	const pathname = usePathname();
 
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState<string>("");
+	const [existingChannelId, setExistingChannelId] = useState<string | null>(null);
 
 	const form = useForm({
 		defaultValues: {
@@ -32,6 +37,26 @@ export default function CreateChannelPage() {
 		},
 		onSubmit: async ({ value }) => {
 			try {
+				// Ensure the user has an on-chain User object before proceeding
+				if (!account?.address) {
+					setUploadProgress("Connect your wallet to continue.");
+					return;
+				}
+				setUploadProgress("Checking user profile...");
+				const user = await getUserDetails(account.address);
+				if (!user) {
+					setUploadProgress("No user profile found. Redirecting to signup...");
+					const returnTo = pathname || "/channel";
+					router.replace(`/auth/signup?returnTo=${encodeURIComponent(returnTo)}`);
+					return;
+				}
+				// Restrict multiple channels per user
+				if (user.channel_id) {
+					setUploadProgress("You already have a channel linked to this profile. Creating another is not allowed.");
+					setExistingChannelId(user.channel_id);
+					return;
+				}
+
 				setIsUploading(true);
 				setUploadProgress("Uploading images to Walrus...");
 
@@ -65,7 +90,7 @@ export default function CreateChannelPage() {
 
 				tx.moveCall({
 					arguments: [
-						tx.object(fundsuiRegistryId),
+						tx.object(user.id),
 						tx.pure.string(value.displayName),
 						tx.pure.string(value.tagline),
 						tx.pure.string(value.description),
@@ -86,13 +111,36 @@ export default function CreateChannelPage() {
 							suiClient
 								.waitForTransaction({
 									digest: tx.digest,
-									options: { showEffects: true },
+									options: { showEffects: true, showObjectChanges: true },
 								})
 								.then(async (result) => {
 									console.log(result);
-									setUploadProgress("Channel created successfully!");
-									// Optionally redirect to the new channel
-									// router.push(`/channel/${channelId}`);
+									// Try to find the created Channel object from objectChanges
+									let channelId: string | null = null;
+									const changes = (result as any)?.objectChanges as Array<any> | undefined;
+									if (Array.isArray(changes)) {
+										for (const ch of changes) {
+											if (ch.type === "created" && typeof ch.objectType === "string" && ch.objectType.includes("::channel::Channel")) {
+												channelId = ch.objectId as string;
+												break;
+											}
+										}
+									}
+
+									// Fallback: re-fetch user to read channel_id after mutation
+									if (!channelId && account?.address) {
+										try {
+											const u = await getUserDetails(account.address);
+											channelId = u?.channel_id ?? null;
+										} catch {}
+									}
+
+									if (channelId) {
+										setUploadProgress("Channel created successfully! Redirecting...");
+										router.push(`/${channelId}`);
+									} else {
+										setUploadProgress("Channel created successfully! (Couldn’t resolve channel id automatically)");
+									}
 								});
 						},
 					},
@@ -108,9 +156,54 @@ export default function CreateChannelPage() {
 		},
 	});
 
+	// On mount: if wallet connected but user doesn't exist, redirect to signup with returnTo
+	// Keeps form flow snappy and avoids wasted uploads.
+	// We retain the onSubmit guard as a safety net.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(() => {
+		let cancelled = false;
+		const check = async () => {
+			if (!account?.address) return;
+			try {
+				const user = await getUserDetails(account.address);
+				if (!cancelled && !user) {
+					const returnTo = pathname || "/channel";
+					router.replace(`/auth/signup?returnTo=${encodeURIComponent(returnTo)}`);
+				}
+				// If user has an existing channel, notify them to avoid confusion
+				if (!cancelled && user?.channel_id) {
+					setUploadProgress("You already have a channel linked to this profile.");
+					setExistingChannelId(user.channel_id);
+				}
+			} catch {
+				// ignore and allow user to try flow
+			}
+		};
+		check();
+		return () => {
+			cancelled = true;
+		};
+	}, [account?.address, pathname, router]);
+
 	return (
 		<div className="mx-auto max-w-2xl p-6">
 			<h1 className="mb-8 font-bold text-3xl">Create New Channel</h1>
+
+			{existingChannelId && (
+				<div className="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4">
+					<p className="text-yellow-800">
+						You already have a channel linked to this profile. Creating another isn’t allowed.
+					</p>
+					<div className="mt-3">
+						<Link
+							className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+							href={`/${existingChannelId}`}
+						>
+							View my channel
+						</Link>
+					</div>
+				</div>
+			)}
 
 			<form
 				className="space-y-6"
@@ -286,7 +379,7 @@ export default function CreateChannelPage() {
 				<div className="pt-4">
 					<button
 						className="w-full rounded-md bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-						disabled={isUploading}
+						disabled={isUploading || !!existingChannelId}
 						type="submit"
 					>
 						{isUploading ? "Creating Channel..." : "Create Channel"}

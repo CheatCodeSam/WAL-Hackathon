@@ -10,7 +10,7 @@ import { useForm } from '@tanstack/react-form';
 import { useEffect, useState } from 'react';
 import { useNetworkVariable } from '~/app/networkConfig';
 import { getUserDetails } from '~/services/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignupPage() {
   const account = useCurrentAccount();
@@ -20,6 +20,15 @@ export default function SignupPage() {
   const suiClient = useSuiClient();
   const { mutateAsync } = useSignAndExecuteTransaction();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawReturnTo = searchParams?.get('returnTo') || '/auth/me';
+  // Basic safety: only allow same-origin internal paths without protocol, limit length.
+  const safeReturnTo = rawReturnTo.startsWith('/') &&
+    !rawReturnTo.startsWith('//') &&
+    !/^[a-zA-Z]+:/.test(rawReturnTo) &&
+    rawReturnTo.length <= 200
+    ? rawReturnTo
+    : '/auth/me';
 
   const [status, setStatus] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +51,8 @@ export default function SignupPage() {
         setStatus('Checking for existing user...');
         const existing = await getUserDetails(account.address);
         if (existing) {
-          setStatus('A user already exists for this address.');
+          setStatus('A user already exists for this address. Redirecting...');
+          router.replace(safeReturnTo);
           return;
         }
 
@@ -67,7 +77,7 @@ export default function SignupPage() {
               });
               if (finalized.effects?.status.status === 'success') {
                 setStatus('Signup complete! Your user has been created. Redirecting...');
-                router.replace('/auth/me');
+                router.replace(safeReturnTo);
               } else {
                 setStatus('Transaction finalized but not successful.');
               }
@@ -97,7 +107,7 @@ export default function SignupPage() {
         const existing = await getUserDetails(account.address);
         if (!cancelled && existing) {
           setStatus('A user already exists for this address. Redirecting...');
-          router.replace('/auth/me');
+          router.replace(safeReturnTo);
         }
       } catch (_) {
         // Ignore check errors; user can still attempt signup
@@ -107,7 +117,7 @@ export default function SignupPage() {
     return () => {
       cancelled = true;
     };
-  }, [account?.address, router]);
+  }, [account?.address, router, safeReturnTo]);
 
   return (
     <div className="mx-auto max-w-md p-6">

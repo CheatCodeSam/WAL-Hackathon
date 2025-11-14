@@ -1,5 +1,7 @@
 import { env } from "~/env";
 import { getObjectFromAddress, getObjectById, getSharedObjectsByType } from "./graphql";
+import { getUserDetails } from "./user";
+import { channel } from "diagnostics_channel";
 
 export interface Channel {
   id: string;
@@ -39,6 +41,18 @@ export async function getChannelDetails(channelId: string) {
     subscription_price_in_mist: json.subscription_price_in_mist,
     max_subscription_duration_in_months: json.max_subscription_duration_in_months,
   } as Channel;
+}
+
+export async function getChannelDetailsByAddress(address: string): Promise<Channel | null> {
+  const user = await getUserDetails(address);
+  if (!user?.channel_id) return null;
+
+  try {
+    const channel = await getChannelDetails(user.channel_id);
+    return channel ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getAllChannels() {
