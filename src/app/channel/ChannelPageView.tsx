@@ -22,7 +22,11 @@ export function ChannelPageView() {
 
 	const channelQuery = api.channel.getChannelByOwner.useQuery(
 		account?.address ?? "",
-		{ enabled: !!account?.address },
+		{
+			enabled: !!account?.address,
+			retry: false,
+			refetchOnWindowFocus: false,
+		},
 	);
 
 	useEffect(() => {

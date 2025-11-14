@@ -1,6 +1,5 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { suiClient } from "~/server/sui";
 import { getAllChannels, getChannelDetails } from "~/services/api";
 import { lookupChannel } from "~/services/backend/channel/lookupChannel";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -8,7 +7,7 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 export const channelRouter = createTRPCRouter({
 	isAddressSubscribedToChannel: publicProcedure
 		.input(z.string())
-		.query(async (opts) => {
+		.query(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 10));
 			return false;
 		}),
