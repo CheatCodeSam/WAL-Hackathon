@@ -11,10 +11,10 @@ import { useNetworkVariable } from "../networkConfig";
 
 interface SubscribeButtonProps {
 	channelId: string;
+	userId: string;
 }
 
 export function SubscribeButton(props: SubscribeButtonProps) {
-	const account = useCurrentAccount()!;
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
@@ -24,7 +24,7 @@ export function SubscribeButton(props: SubscribeButtonProps) {
 			className="cursor-pointer"
 			onClick={() => {
 				subscribeToChannel(
-					account.address,
+					props.userId,
 					props.channelId,
 					3,
 					hostingClientAddress,

@@ -12,7 +12,7 @@ async function checkSubscriptionStatus(
 }
 
 export async function subscribeToChannel(
-	userAddress: string,
+	userObjectId: string,
 	channelId: string,
 	durationInMonths: number,
 	frontendAddress: string,
@@ -21,24 +21,24 @@ export async function subscribeToChannel(
 	mutateAsync: any,
 ): Promise<Result<void, ChannelSubscribeError>> {
 	const tx = new Transaction();
-	const [paymentCoin] = tx.splitCoins(tx.gas, [90000]);
+	// TODO: Replace hard-coded payment with dynamic calculation using channel.subscription_price_in_mist * duration.
+	const [paymentCoin] = tx.splitCoins(tx.gas, [90_000]);
 
-	const subscription = tx.moveCall({
+	// Move function signature:
+	// public fun new(user: &mut User, channel: &Channel, duration_in_months: u8, frontend_address: address, mut payment: Coin<SUI>, ctx: &mut TxContext): ID
+	tx.moveCall({
+		target: `${fundsuiPackageId}::subscription::new`,
 		arguments: [
-			tx.object(channelId),
+			tx.object(userObjectId), // &mut User
+			tx.object(channelId),    // &Channel
 			tx.pure.u8(durationInMonths),
 			tx.pure.address(frontendAddress),
 			paymentCoin,
 		],
-		target: `${fundsuiPackageId}::subscription::new`,
 	});
 
-	tx.transferObjects([subscription], userAddress);
-
 	try {
-		await mutateAsync({
-			transaction: tx,
-		});
+		await mutateAsync({ transaction: tx });
 		return ok();
 	} catch (error) {
 		return err({ type: "TRANSACTION_ERROR", msg: `${error}` });

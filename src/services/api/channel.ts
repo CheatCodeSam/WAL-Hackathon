@@ -1,7 +1,6 @@
 import { env } from "~/env";
 import { getObjectFromAddress, getObjectById, getSharedObjectsByType } from "./graphql";
 import { getUserDetails } from "./user";
-import { channel } from "diagnostics_channel";
 
 export interface Channel {
   id: string;

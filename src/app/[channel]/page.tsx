@@ -1,11 +1,11 @@
 'use client';
 
-import { SubscribeButton } from './SubscribeButton';
 import { api } from '~/trpc/react';
 import { env } from '~/env';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import ChannelPodcasts from './ChannelPodcasts';
+import { ChannelSubscription } from './ChannelSubscription';
 
 type ChannelDetails = {
   id: string;
@@ -24,7 +24,6 @@ export default function ChannelPage() {
     channelId,
     { enabled: !!channelId }
   );
-
   const ch = (data ?? null) as ChannelDetails | null;
 
   const coverUrl = ch?.cover_image_uri
@@ -33,9 +32,7 @@ export default function ChannelPage() {
   const profileUrl = ch?.profile_image_uri
     ? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${ch.profile_image_uri}`
     : undefined;
-  const priceSui = ch?.subscription_price_in_mist
-    ? Number(BigInt(ch.subscription_price_in_mist)) / 1_000_000_000
-    : undefined;
+  // price calculation moved into ChannelSubscription component
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -115,28 +112,11 @@ export default function ChannelPage() {
               </div>
             </div>
             <div className="space-y-4">
-              <div className="rounded-lg bg-white p-6 shadow">
-                <h3 className="mb-2 font-semibold">Subscription</h3>
-                <div className="text-gray-700">
-                  <div className="flex items-center justify-between">
-                    <span>Price</span>
-                    <span className="font-medium">
-                      {priceSui !== undefined
-                        ? `${priceSui.toFixed(4)} SUI`
-                        : '—'}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span>Max duration</span>
-                    <span className="font-medium">
-                      {ch.max_subscription_duration_in_months ?? '—'} months
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <SubscribeButton channelId={channelId} />
-                </div>
-              </div>
+              <ChannelSubscription
+                channelId={channelId}
+                subscriptionPriceMist={ch.subscription_price_in_mist}
+                maxSubscriptionDurationMonths={ch.max_subscription_duration_in_months}
+              />
             </div>
           </div>
         )}
