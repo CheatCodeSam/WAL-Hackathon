@@ -121,6 +121,59 @@ export async function getAllChannels() {
 	return channels;
 }
 
+// User functions
+export interface UserDetails {
+	id: string;
+	username: string;
+	channel_id: string | null;
+	has_channel: boolean;
+	subscriptions_bag_id?: string; // underlying bag object id if present
+}
+
+export async function getUserDetails(address: string): Promise<UserDetails | null> {
+	const result = await getObjectFromAddress(
+		address,
+		`${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::user::User`,
+	);
+
+	if (result.data.objects.nodes.length === 0) {
+		return null;
+	}
+
+	const node = result.data.objects.nodes[0];
+	const json = node.asMoveObject.contents.json as Record<string, any>;
+
+	// Attempt to normalize optional channel field representations.
+	let channelId: string | null = null;
+	const channelRaw = json.channel;
+	if (typeof channelRaw === "string") {
+		channelId = channelRaw;
+	} else if (channelRaw && typeof channelRaw === "object") {
+		if ("some" in channelRaw && typeof channelRaw.some === "string") {
+			channelId = channelRaw.some;
+		} else if ("Some" in channelRaw && typeof channelRaw.Some === "string") {
+			channelId = channelRaw.Some;
+		}
+	}
+
+	const hasChannel = !!channelId;
+
+	// Bag representation may include nested object; try to pull its id if available.
+	let subscriptionsBagId: string | undefined;
+	const subs = json.subscriptions;
+	if (subs && typeof subs === "object" && typeof subs.id === "string") {
+		subscriptionsBagId = subs.id;
+	}
+
+	return {
+		id: node.asMoveObject.address,
+		username: json.username || "",
+		channel_id: channelId,
+		has_channel: hasChannel,
+		subscriptions_bag_id: subscriptionsBagId,
+	};
+}
+
 // Podcast functions
 export async function getPodcastsByChannel(channelId: string) {
 	const result = await getDynamicFieldsFromId(channelId);

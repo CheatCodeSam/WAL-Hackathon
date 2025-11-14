@@ -4,8 +4,6 @@ import {
 	getAllPodcasts,
 	getPodcastsByChannel,
 	getPodcastDetails,
-	getAllChannels,
-	getChannelDetails,
 } from "~/services/api";
 
 export const podcastRouter = createTRPCRouter({

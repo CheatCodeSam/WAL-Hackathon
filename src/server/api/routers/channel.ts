@@ -11,5 +11,9 @@ export const channelRouter = createTRPCRouter({
 			const { input } = opts;
 			return await getChannelDetails(input);
 		}),
+		byAddress: publicProcedure.input(z.string()).query(async (opts) => {
+			const { input } = opts;
+			return await getChannelDetails(input);
+		})
 	},
 });
