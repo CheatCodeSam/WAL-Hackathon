@@ -6,6 +6,7 @@ import {
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "~/components/ui/button";
+import type { Podcast } from "~/services/api";
 import type { ChannelViewInterface } from "~/services/backend/channel/lookupChannel";
 import { api } from "~/trpc/react";
 import { useNetworkVariable } from "../networkConfig";
@@ -14,10 +15,12 @@ import { useChannelPageStore } from "./store";
 
 export interface ChannelPageViewProps {
 	channel: ChannelViewInterface;
+	podcasts: Podcast[];
 }
 
 export function ChannelPageView(props: ChannelPageViewProps) {
 	const channel = props.channel;
+	const podcasts = props.podcasts;
 
 	const account = useCurrentAccount();
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
@@ -237,6 +240,28 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 							{channel.maxSubscriptionDurationInMonths}
 						</p>
 					</div>
+				</div>
+
+				<div className="mt-8 space-y-4">
+					<h2 className="font-bold text-2xl">Podcasts</h2>
+					{podcasts.length === 0 ? (
+						<p className="text-gray-600">No podcasts available yet.</p>
+					) : (
+						<div className="space-y-2">
+							{podcasts.map((podcast) => (
+								<Link
+									key={podcast.id}
+									href={`/${channel.owner}/${podcast.id}`}
+									className="block rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+								>
+									<div className="font-semibold text-lg">{podcast.title}</div>
+									<div className="font-mono text-gray-500 text-xs">
+										{podcast.id}
+									</div>
+								</Link>
+							))}
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

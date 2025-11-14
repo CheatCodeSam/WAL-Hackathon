@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getPodcastsByChannel } from "~/services/api";
 import { lookupChannel } from "~/services/backend/channel/lookupChannel";
 import { ChannelPageView } from "./ChannelPageView";
 
@@ -26,5 +27,7 @@ export default async function Channel({ params }: PageProps) {
 
 	const channelData = channel.value;
 
-	return <ChannelPageView channel={channelData} />;
+	const podcasts = await getPodcastsByChannel(channelData.channelId);
+
+	return <ChannelPageView channel={channelData} podcasts={podcasts} />;
 }
