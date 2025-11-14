@@ -60,7 +60,7 @@ async function getChannelForAddress(
 	tx.moveCall({
 		target: `${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::channel::get_channel_id_for_address`,
 		arguments: [
-			tx.object(env.NEXT_PUBLIC_CHANNEL_REGISTRY),
+			tx.object(env.NEXT_PUBLIC_USER_REGISTRY),
 			tx.pure.address(address),
 		],
 	});

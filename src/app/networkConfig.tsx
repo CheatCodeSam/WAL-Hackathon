@@ -8,7 +8,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
 			url: getFullnodeUrl("testnet"),
 			variables: {
 				fundsuiPackageId: env.NEXT_PUBLIC_CONTRACT_ADDRESS,
-				fundsuiChannelRegistry: env.NEXT_PUBLIC_CHANNEL_REGISTRY,
+				fundsuiUserRegistry: env.NEXT_PUBLIC_USER_REGISTRY,
 				hostingClientAddress: env.NEXT_PUBLIC_CLIENT_ADDRESS,
 			},
 		},
@@ -16,7 +16,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
 			url: getFullnodeUrl("mainnet"),
 			variables: {
 				fundsuiPackageId: env.NEXT_PUBLIC_CONTRACT_ADDRESS,
-				fundsuiChannelRegistry: env.NEXT_PUBLIC_CHANNEL_REGISTRY,
+				fundsuiUserRegistry: env.NEXT_PUBLIC_USER_REGISTRY,
 				hostingClientAddress: env.NEXT_PUBLIC_CLIENT_ADDRESS,
 			},
 		},
