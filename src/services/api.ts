@@ -109,7 +109,7 @@ export async function getAllChannels() {
 
 		return {
 			id: node.asMoveObject.address,
-			name: channel.name || "",
+			name: channel.display_name || "",
 			description: channel.description || "",
 			cover_image_uri: channel.cover_photo_uri || "",
 			profile_image_uri: channel.profile_photo_uri || "",
