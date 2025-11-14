@@ -7,8 +7,10 @@ import {
 } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { useForm } from '@tanstack/react-form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNetworkVariable } from '~/app/networkConfig';
+import { getUserDetails } from '~/services/api';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const account = useCurrentAccount();
@@ -17,6 +19,7 @@ export default function SignupPage() {
 
   const suiClient = useSuiClient();
   const { mutateAsync } = useSignAndExecuteTransaction();
+  const router = useRouter();
 
   const [status, setStatus] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,6 +37,15 @@ export default function SignupPage() {
       }
       try {
         setIsSubmitting(true);
+
+        // Pre-check: prevent creating a second user for the same wallet
+        setStatus('Checking for existing user...');
+        const existing = await getUserDetails(account.address);
+        if (existing) {
+          setStatus('A user already exists for this address.');
+          return;
+        }
+
         setStatus('Creating your user on-chain...');
 
         const tx = new Transaction();
@@ -54,7 +66,8 @@ export default function SignupPage() {
                 options: { showEffects: true },
               });
               if (finalized.effects?.status.status === 'success') {
-                setStatus('Signup complete! Your user has been created.');
+                setStatus('Signup complete! Your user has been created. Redirecting...');
+                router.replace('/auth/me');
               } else {
                 setStatus('Transaction finalized but not successful.');
               }
@@ -74,6 +87,27 @@ export default function SignupPage() {
       }
     },
   });
+
+  // On mount / when wallet changes: if user already exists, redirect away from signup.
+  useEffect(() => {
+    let cancelled = false;
+    const checkExisting = async () => {
+      if (!account?.address) return;
+      try {
+        const existing = await getUserDetails(account.address);
+        if (!cancelled && existing) {
+          setStatus('A user already exists for this address. Redirecting...');
+          router.replace('/auth/me');
+        }
+      } catch (_) {
+        // Ignore check errors; user can still attempt signup
+      }
+    };
+    checkExisting();
+    return () => {
+      cancelled = true;
+    };
+  }, [account?.address, router]);
 
   return (
     <div className="mx-auto max-w-md p-6">
