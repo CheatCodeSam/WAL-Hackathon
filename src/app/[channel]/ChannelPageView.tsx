@@ -234,10 +234,10 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 
 					<div>
 						<span className="font-semibold">
-							Max Subscription Duration (months):
+							Max Subscription Duration (weeks):
 						</span>
 						<p className="text-gray-700">
-							{channel.maxSubscriptionDurationInMonths}
+							{channel.maxSubscriptionDurationInWeeks}
 						</p>
 					</div>
 				</div>

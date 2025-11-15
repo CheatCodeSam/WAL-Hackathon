@@ -50,7 +50,7 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 					<div>
 						<span className="font-semibold">Nonce:</span>
 						<p className="break-all font-mono text-gray-700 text-sm">
-							{podcast.nouce}
+							{podcast.nonce}
 						</p>
 					</div>
 

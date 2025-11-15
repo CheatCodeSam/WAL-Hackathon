@@ -17,7 +17,7 @@ export interface ChannelViewInterface {
 	coverPhotoUri: string;
 	profilePhotoUri: string;
 	subscriptionPriceInMist: number;
-	maxSubscriptionDurationInMonths: number;
+	maxSubscriptionDurationInWeeks: number;
 }
 
 const SUI_ADDRESS_REGEX = /^0[xX][a-fA-F0-9]{64}$/;
@@ -93,10 +93,12 @@ async function getChannelForAddress(
 					coverPhotoUri: fields.cover_photo_uri,
 					profilePhotoUri: fields.profile_photo_uri,
 					subscriptionPriceInMist: Number(fields.subscription_price_in_mist),
-					maxSubscriptionDurationInMonths: Number(
-						fields.max_subscription_duration_in_months,
+					maxSubscriptionDurationInWeeks: Number(
+						fields.max_subscription_duration_in_weeks,
 					),
 				};
+
+				console.log(channelView);
 
 				return ok(channelView);
 			}

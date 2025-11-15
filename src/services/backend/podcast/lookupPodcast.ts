@@ -11,7 +11,7 @@ export interface PodcastViewInterface {
 	description: string;
 	file_type: string;
 	source_file_blob_id: string;
-	nouce: string;
+	nonce: string;
 	created_at: number;
 }
 
@@ -37,7 +37,7 @@ export async function lookupPodcast(
 			description: fields.description,
 			file_type: fields.filetype,
 			source_file_blob_id: fields.source_file_blob_id,
-			nouce: fields.nouce,
+			nonce: fields.nonce,
 			created_at: Number(fields.created_at),
 			id: podcastAddress,
 		};
