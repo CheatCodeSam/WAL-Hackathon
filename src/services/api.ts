@@ -86,7 +86,7 @@ export async function getChannelId(address: string) {
 export async function getChannelDetails(channelId: string) {
 	const result = await getObjectById(channelId);
 	const json = result.asMoveObject.contents.json;
-	
+
 	return {
 		id: result.asMoveObject.address,
 		name: json.display_name,
@@ -95,7 +95,8 @@ export async function getChannelDetails(channelId: string) {
 		cover_image_uri: json.cover_photo_uri,
 		profile_image_uri: json.profile_photo_uri,
 		subscription_price_in_mist: json.subscription_price_in_mist,
-		max_subscription_duration_in_months: json.max_subscription_duration_in_months,
+		max_subscription_duration_in_months:
+			json.max_subscription_duration_in_months,
 	} as Channel;
 }
 
@@ -114,7 +115,8 @@ export async function getAllChannels() {
 			cover_image_uri: channel.cover_photo_uri || "",
 			profile_image_uri: channel.profile_photo_uri || "",
 			subscription_price_in_mist: channel.subscription_price_in_mist || "",
-			max_subscription_duration_in_months: channel.max_subscription_duration_in_months || "",
+			max_subscription_duration_in_months:
+				channel.max_subscription_duration_in_months || "",
 		};
 	});
 
@@ -125,21 +127,13 @@ export async function getAllChannels() {
 export async function getPodcastsByChannel(channelId: string) {
 	const result = await getDynamicFieldsFromId(channelId);
 
-	const podcasts: Podcast[] = result.data.address.dynamicFields.nodes.map(
-		(node: any) => {
-			const podcast = node.contents.json.value;
+	const podcasts: Podcast[] = [];
 
-			return {
-				id: node.contents.json.id || "",
-				title: podcast.title || "",
-				description: podcast.description || "",
-				source_file_blob_id: podcast.source_file_blob_id || "",
-				file_type: podcast.file_type || "",
-				nouce: podcast.nouce || "",
-				created_at: podcast.created_at || "",
-			};
-		},
-	);
+	for (const obj of result.data.address.dynamicFields.nodes) {
+		const objectId = obj.contents.json.value;
+		const podcast = await getPodcastDetails(objectId);
+		podcasts.push(podcast);
+	}
 
 	return podcasts;
 }
@@ -147,21 +141,19 @@ export async function getPodcastsByChannel(channelId: string) {
 export async function getPodcastDetails(podcastId: string) {
 	const result = await getObjectById(podcastId);
 	const json = result.asMoveObject.contents.json as Record<string, any>;
-	
 	return {
 		id: podcastId,
-		title: json.value.title || "",
-		description: json.value.description || "",
-		source_file_blob_id: json.value.source_file_blob_id || "",
-		nouce: json.value.nouce || "",
-		created_at: json.value.created_at || "",
-		file_type: json.value.file_type || "",
+		title: json.title || "",
+		description: json.description || "",
+		source_file_blob_id: json.source_file_blob_id || "",
+		nouce: json.nouce || "",
+		created_at: json.created_at || "",
+		file_type: json.file_type || "",
 	} as Podcast;
 }
 
 export async function getAllPodcasts() {
 	const result = await getSharedObjectsByType(
-
 		`0x2::dynamic_field::Field<0x1::string::String, ${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::podcast::Podcast>`,
 	);
 
@@ -261,9 +253,7 @@ async function getObjectById(id: string) {
 	});
 
 	if (!response.ok) {
-		throw new Error(
-			`Network error: ${response.status} ${response.statusText}`,
-		);
+		throw new Error(`Network error: ${response.status} ${response.statusText}`);
 	}
 
 	const result = await response.json();
@@ -278,9 +268,7 @@ async function fetchQuery(query: string, variables: Record<string, string>) {
 	});
 
 	if (!response.ok) {
-		throw new Error(
-			`Network error: ${response.status} ${response.statusText}`,
-		);
+		throw new Error(`Network error: ${response.status} ${response.statusText}`);
 	}
 
 	const result = await response.json();

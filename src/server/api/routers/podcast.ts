@@ -1,19 +1,17 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
 	getAllPodcasts,
-	getPodcastsByChannel,
 	getPodcastDetails,
-	getAllChannels,
-	getChannelDetails,
+	getPodcastsByChannel,
 } from "~/services/api";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const podcastRouter = createTRPCRouter({
 	podcast: {
 		list: publicProcedure.query(async () => {
 			return await getAllPodcasts();
 		}),
-		
+
 		listFromChannel: publicProcedure.input(z.string()).query(async (opts) => {
 			const { input } = opts;
 			return await getPodcastsByChannel(input);
@@ -22,5 +20,5 @@ export const podcastRouter = createTRPCRouter({
 			const { input } = opts;
 			return await getPodcastDetails(input);
 		}),
-	}
+	},
 });
