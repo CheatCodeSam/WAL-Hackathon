@@ -51,7 +51,7 @@ public struct Channel has key {
     // expired subscriptions.
     subscribers: sui::object_table::ObjectTable<address, Subscription>,
     // Functionally, this works more like a Set then a table.
-    // Podcast ID -> boolen (always true)
+    // Podcast ID -> boolean (always true)
     published_podcasts: Table<ID, bool>,
 }
 
