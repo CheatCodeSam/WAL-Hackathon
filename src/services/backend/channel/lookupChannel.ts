@@ -1,6 +1,5 @@
 import { Transaction } from "@mysten/sui/transactions";
-import { err, ok, Result } from "neverthrow";
-import { resolve } from "path";
+import { err, ok, type Result } from "neverthrow";
 import { env } from "~/env";
 import { suiClient, suinsClient } from "~/server/sui";
 
