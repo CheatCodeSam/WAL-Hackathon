@@ -1,5 +1,10 @@
 "use client";
 
+import {
+	useCurrentAccount,
+	useSignAndExecuteTransaction,
+} from "@mysten/dapp-kit";
+import { useNetworkVariable } from "~/app/networkConfig";
 import type { PodcastViewInterface } from "~/services/backend/podcast/lookupPodcast";
 
 export interface PodcastPageViewProps {
@@ -8,6 +13,11 @@ export interface PodcastPageViewProps {
 
 export function PodcastPageView(props: PodcastPageViewProps) {
 	const podcast = props.podcast;
+
+	const account = useCurrentAccount();
+	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
+	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
+	const { mutateAsync } = useSignAndExecuteTransaction();
 
 	return (
 		<div className="min-h-screen bg-gray-50 p-8">
