@@ -106,22 +106,16 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const handleSubscribe = async () => {
 		if (!canSubscribe() || !account?.address) return;
 
-		try {
-			startSubscribing();
-			await subscribeToChannel(
-				account.address,
-				channel.channelId,
-				3,
-				hostingClientAddress,
-				fundsuiPackageId,
-				mutateAsync,
-			);
-			finishSubscribing();
-		} catch (err) {
-			failSubscribing(
-				err instanceof Error ? err.message : "Failed to subscribe",
-			);
-		}
+		startSubscribing();
+		const result = await subscribeToChannel(
+			account.address,
+			channel.channelId,
+			hostingClientAddress,
+			fundsuiPackageId,
+			mutateAsync,
+		);
+		if (result.isErr()) failSubscribing(result.error.msg);
+		else finishSubscribing();
 	};
 
 	const handleUnsubscribe = async () => {
