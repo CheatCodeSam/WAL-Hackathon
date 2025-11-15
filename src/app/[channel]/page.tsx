@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { getPodcastsByChannel } from "~/services/api";
-import { lookupChannel } from "~/services/backend/channel/lookupChannel";
+import {
+	getPublishedPodcasts,
+	lookupChannel,
+} from "~/services/backend/channel/lookupChannel";
 import { ChannelPageView } from "./ChannelPageView";
 
 interface PageProps {
@@ -27,7 +30,13 @@ export default async function Channel({ params }: PageProps) {
 
 	const channelData = channel.value;
 
-	const podcasts = await getPodcastsByChannel(channelData.channelId);
+	const podcasts = await getPublishedPodcasts(channelData.podcastsTable);
 
-	return <ChannelPageView channel={channelData} podcasts={podcasts} />;
+	if (podcasts.isErr()) {
+		redirect("/404");
+	}
+
+	const podcastData = podcasts.value;
+
+	return <ChannelPageView channel={channelData} podcasts={podcastData} />;
 }

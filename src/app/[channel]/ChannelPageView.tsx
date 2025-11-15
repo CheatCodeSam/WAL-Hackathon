@@ -6,8 +6,10 @@ import {
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "~/components/ui/button";
-import type { Podcast } from "~/services/api";
-import type { ChannelViewInterface } from "~/services/backend/channel/lookupChannel";
+import type {
+	ChannelViewInterface,
+	PodcastChannelViewInterface,
+} from "~/services/backend/channel/lookupChannel";
 import { api } from "~/trpc/react";
 import { useNetworkVariable } from "../networkConfig";
 import { subscribeToChannel } from "./actions";
@@ -15,7 +17,7 @@ import { useChannelPageStore } from "./store";
 
 export interface ChannelPageViewProps {
 	channel: ChannelViewInterface;
-	podcasts: Podcast[];
+	podcasts: PodcastChannelViewInterface[];
 }
 
 export function ChannelPageView(props: ChannelPageViewProps) {

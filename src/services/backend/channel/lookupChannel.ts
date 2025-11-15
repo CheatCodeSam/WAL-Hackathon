@@ -8,6 +8,19 @@ export type LookUpChannelError =
 	| "MALFORMED_SUI_ADDRESS"
 	| "CHANNEL_NOT_FOUND_FOR_ADDRESS";
 
+export type GetPublishedPodcastsError =
+	| "FAILED_TO_FETCH_DYNAMIC_FIELDS"
+	| "PODCAST_OBJECT_NOT_FOUND";
+
+export interface PodcastChannelViewInterface {
+	id: string;
+	title: string;
+	description: string;
+	sourceFileUri: string;
+	nonce: string;
+	createdAt: string;
+}
+
 export interface ChannelViewInterface {
 	channelId: string;
 	owner: string;
@@ -18,6 +31,8 @@ export interface ChannelViewInterface {
 	profilePhotoUri: string;
 	subscriptionPriceInMist: number;
 	maxSubscriptionDurationInWeeks: number;
+	podcastsTable: string;
+	subscribersTable: string;
 }
 
 const SUI_ADDRESS_REGEX = /^0[xX][a-fA-F0-9]{64}$/;
@@ -96,9 +111,9 @@ async function getChannelForAddress(
 					maxSubscriptionDurationInWeeks: Number(
 						fields.max_subscription_duration_in_weeks,
 					),
+					podcastsTable: fields.published_podcasts.fields.id.id,
+					subscribersTable: fields.subscribers.fields.id.id,
 				};
-
-				console.log(channelView);
 
 				return ok(channelView);
 			}
@@ -106,4 +121,50 @@ async function getChannelForAddress(
 	}
 
 	return err("CHANNEL_NOT_FOUND_FOR_ADDRESS");
+}
+
+export async function getPublishedPodcasts(
+	publishedPodcastsTableId: string,
+): Promise<Result<PodcastChannelViewInterface[], GetPublishedPodcastsError>> {
+	try {
+		const publishedPodcasts = await suiClient.getDynamicFields({
+			parentId: publishedPodcastsTableId,
+		});
+
+		if (!publishedPodcasts.data) {
+			return err("FAILED_TO_FETCH_DYNAMIC_FIELDS");
+		}
+
+		const podcasts: PodcastChannelViewInterface[] = [];
+		const resultData = publishedPodcasts.data;
+
+		for (const d of resultData) {
+			const podcastId = d.name.value as string;
+
+			const podcastObject = await suiClient.getObject({
+				id: podcastId,
+				options: { showContent: true },
+			});
+
+			if (podcastObject.data?.content?.dataType === "moveObject") {
+				// biome-ignore lint/suspicious/noExplicitAny: If we get a object we know it has fields
+				const fields = podcastObject.data.content.fields as any;
+
+				podcasts.push({
+					id: fields.id.id,
+					title: fields.title,
+					description: fields.description,
+					sourceFileUri: fields.source_file_uri,
+					nonce: fields.nonce,
+					createdAt: fields.created_at,
+				});
+			} else {
+				return err("PODCAST_OBJECT_NOT_FOUND");
+			}
+		}
+
+		return ok(podcasts);
+	} catch (_error) {
+		return err("FAILED_TO_FETCH_DYNAMIC_FIELDS");
+	}
 }

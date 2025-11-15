@@ -9,15 +9,13 @@ import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
-import {
-	uploadEncryptedAudio,
-	formatFileSize,
-} from "~/services/walrus-utils";
 import { useSeal } from "~/app/SealProvider";
+import { formatFileSize, uploadEncryptedAudio } from "~/services/walrus-utils";
 
 export default function Upload() {
 	const account = useCurrentAccount()!;
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
+	const fundsuiRegistryId = useNetworkVariable("fundsuiChannelRegistry");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
 	const { encrypt, ready: sealReady } = useSeal();
@@ -26,7 +24,6 @@ export default function Upload() {
 
 	const form = useForm({
 		defaultValues: {
-			cap: "",
 			channel: "",
 			title: "",
 			description: "",
@@ -83,13 +80,12 @@ export default function Upload() {
 
 				const id_value = tx.moveCall({
 					arguments: [
-						tx.object(value.cap),
 						tx.object(value.channel),
+						tx.object(fundsuiRegistryId),
 						tx.pure.string(value.title),
+						tx.pure.string(audioUploadResult.nonce),
 						tx.pure.string(value.description),
 						tx.pure.string(audioUploadResult.blobId),
-						tx.pure.string(mimeType),
-						tx.pure.string(audioUploadResult.nonce),
 					],
 					target: `${fundsuiPackageId}::podcast::new`,
 				});
@@ -120,7 +116,9 @@ export default function Upload() {
 				);
 			} catch (error) {
 				console.error("Upload error:", error);
-				alert(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+				alert(
+					`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+				);
 				setIsUploading(false);
 				setUploadProgress("");
 			}
@@ -139,28 +137,6 @@ export default function Upload() {
 					form.handleSubmit();
 				}}
 			>
-				{/* Cap Field */}
-				<form.Field name="cap">
-					{(field) => (
-						<div>
-							<label
-								className="mb-2 block font-medium text-sm"
-								htmlFor={field.name}
-							>
-								Cap
-							</label>
-							<input
-								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-								id={field.name}
-								onChange={(e) => field.handleChange(e.target.value)}
-								placeholder="Enter cap"
-								type="text"
-								value={field.state.value}
-							/>
-						</div>
-					)}
-				</form.Field>
-
 				{/* Channel ID Field */}
 				<form.Field name="channel">
 					{(field) => (
