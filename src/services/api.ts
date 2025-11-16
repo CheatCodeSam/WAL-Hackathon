@@ -30,59 +30,6 @@ interface SuiObjectResponse {
 	};
 }
 
-interface GraphQLResponse<T> {
-	data: T;
-}
-
-interface ObjectsQueryData {
-	objects: {
-		nodes: Array<{
-			asMoveObject: {
-				address: string;
-				contents: {
-					json: Record<string, any>;
-				};
-			};
-		}>;
-	};
-}
-
-interface DynamicFieldsQueryData {
-	address: {
-		dynamicFields: {
-			nodes: Array<{
-				contents: {
-					json: {
-						value: Record<string, string>;
-					};
-					type: {
-						repr: string;
-					};
-				};
-			}>;
-		};
-		address: string;
-	};
-}
-
-// Channel functions
-export async function getChannelId(address: string) {
-	const result = await getObjectFromAddress(
-		address,
-		`${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::channel::ChannelCap`,
-	);
-
-	if (result.data.objects.nodes.length === 0) {
-		return null;
-	}
-
-	const node = result.data.objects.nodes[0];
-	const channelCapId = node.asMoveObject.address;
-	const channelId = node.asMoveObject.contents.json.channel;
-
-	return { channelCapId, channelId };
-}
-
 export async function getChannelDetails(channelId: string) {
 	const result = await getObjectById(channelId);
 	const json = result.asMoveObject.contents.json;
@@ -192,24 +139,6 @@ async function getDynamicFieldsFromId(parentId: string) {
 	}`;
 
 	const variables = { id: parentId };
-	return fetchQuery(query, variables);
-}
-
-async function getObjectFromAddress(address: string, objectType: string) {
-	const query = `query getObjectByType($owner: SuiAddress!, $objectType: String!) {
-		objects(filter: { type: $objectType, owner: $owner }) {
-			nodes {
-				asMoveObject {
-					address
-					contents {
-						json
-					}
-				}
-			}
-		}
-	}`;
-
-	const variables = { objectType, owner: address };
 	return fetchQuery(query, variables);
 }
 
