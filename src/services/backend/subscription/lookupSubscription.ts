@@ -7,13 +7,6 @@ export interface SubscriptionStatus {
 	isActive: boolean;
 }
 
-/**
- * Check if an address has a subscription to a channel
- * @param suiClient - The Sui client instance
- * @param userAddress - The address to check
- * @param channelId - The channel object ID
- * @returns Boolean indicating if the address has a subscription
- */
 export async function hasSubscription(
 	suiClient: SuiClient,
 	userAddress: string,
@@ -63,7 +56,6 @@ export async function isAddressSubscribedToChannel(
 		channelId,
 	);
 
-	// If no subscription exists, return early
 	if (!hasSubscriptionResult) {
 		return {
 			hasSubscription: false,

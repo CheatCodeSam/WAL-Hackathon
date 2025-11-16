@@ -3,13 +3,13 @@
  * Common patterns and helpers for file uploads
  */
 
+import { fromBase64, toBase64 } from "@mysten/sui/utils";
+import type { EncryptOptions } from "~/app/SealProvider";
 import {
 	uploadData,
 	uploadToWalrus,
 	type WalrusUploadResponse,
 } from "./walrus";
-import type { EncryptOptions } from "~/app/SealProvider";
-import { fromBase64, toBase64 } from "@mysten/sui/utils";
 /**
  * Validates a file before upload
  */
@@ -93,8 +93,6 @@ export async function uploadAudio(
 		deletable: options.deletable ?? false,
 	});
 }
-
-
 
 /**
  * Format file size for display
@@ -245,7 +243,7 @@ export async function uploadEncryptedAudio(
 	});
 
 	// 7. Upload encrypted file to Walrus
-	const uploadResult = await uploadData(toBase64(encryptedObject))
+	const uploadResult = await uploadData(toBase64(encryptedObject));
 
 	// 8. Return upload result with nonce for on-chain storage
 	return {

@@ -61,12 +61,10 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		{ enabled: !!account?.address },
 	);
 
-	// Sync owner status with Zustand store
 	useEffect(() => {
 		setIsOwner(isOwner);
 	}, [isOwner, setIsOwner]);
 
-	// Sync subscription check status with Zustand store
 	useEffect(() => {
 		if (!account?.address) {
 			setNoWallet();
