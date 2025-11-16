@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { lookupPodcast } from "~/services/backend/podcast/lookupPodcast";
+import { getAddressFromChannelId } from "~/services/backend/channel/lookupChannel";
+import {
+	lookupPodcast,
+	lookupPodcastWithOwner,
+} from "~/services/backend/podcast/lookupPodcast";
 import { PodcastPageView } from "./PodcastPageView";
 
 interface PageProps {
@@ -12,7 +16,7 @@ interface PageProps {
 export default async function Podcast({ params }: PageProps) {
 	const { podcast: suiAddress } = await params;
 
-	const podcast = await lookupPodcast(suiAddress);
+	const podcast = await lookupPodcastWithOwner(suiAddress);
 
 	if (podcast.isErr()) {
 		const error = podcast.error;
@@ -22,9 +26,8 @@ export default async function Podcast({ params }: PageProps) {
 			case "MALFORMED_SUI_ADDRESS":
 				redirect("/404");
 		}
+	} else {
+		const podcastData = podcast.value;
+		return <PodcastPageView podcast={podcastData} />;
 	}
-
-	const podcastData = podcast.value;
-
-	return <PodcastPageView podcast={podcastData} />;
 }

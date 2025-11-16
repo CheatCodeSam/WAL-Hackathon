@@ -1,5 +1,11 @@
 import { err, ok, type Result } from "neverthrow";
 import { suiClient } from "~/server/sui";
+import {
+	getAddressFromChannelId,
+	type getAddressFromChannelIdErrors,
+	type LookupSuinsError,
+	lookupSuinsName,
+} from "../channel/lookupChannel";
 
 export type LookUpPodcastError =
 	| "MALFORMED_SUI_ADDRESS"
@@ -10,8 +16,21 @@ export interface PodcastViewInterface {
 	title: string;
 	description: string;
 	file_type: string;
-	source_file_blob_id: string;
+	source_file_uri: string;
+	channel_id: string;
 	nonce: string;
+	created_at: number;
+}
+
+export interface PodcastView {
+	id: string;
+	title: string;
+	description: string;
+	file_type: string;
+	source_file_uri: string;
+	channel_id: string;
+	nonce: string;
+	owner: string;
 	created_at: number;
 }
 
@@ -36,7 +55,8 @@ export async function lookupPodcast(
 			title: fields.title,
 			description: fields.description,
 			file_type: fields.filetype,
-			source_file_blob_id: fields.source_file_blob_id,
+			source_file_uri: fields.source_file_uri,
+			channel_id: fields.channel_id,
 			nonce: fields.nonce,
 			created_at: Number(fields.created_at),
 			id: podcastAddress,
@@ -46,4 +66,22 @@ export async function lookupPodcast(
 	}
 
 	return err("MALFORMED_SUI_ADDRESS");
+}
+
+export async function lookupPodcastWithOwner(
+	podcastAddress: string,
+): Promise<Result<PodcastView, string>> {
+	const podcast = await lookupPodcast(podcastAddress);
+	if (podcast.isErr()) return err(podcast.error);
+	const owner = await getAddressFromChannelId(podcast.value.channel_id);
+	if (owner.isErr()) return err(owner.error);
+	const suinsName = await lookupSuinsName(owner.value);
+	if (suinsName.isErr()) return err(suinsName.error);
+	let ownerName: string;
+	if (suinsName.value) ownerName = suinsName.value;
+	else ownerName = owner.value;
+	return ok({
+		...podcast.value,
+		owner: ownerName,
+	});
 }

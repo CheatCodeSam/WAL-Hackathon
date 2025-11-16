@@ -189,3 +189,21 @@ export async function getPublishedPodcasts(
 		return err("FAILED_TO_FETCH_DYNAMIC_FIELDS");
 	}
 }
+
+export type getAddressFromChannelIdErrors = "OWNER_NOT_FOUND";
+
+export async function getAddressFromChannelId(
+	channelId: string,
+): Promise<Result<string, getAddressFromChannelIdErrors>> {
+	const object = (await suiClient.getObject({
+		id: channelId,
+		options: { showContent: true },
+		// biome-ignore lint/suspicious/noExplicitAny: Complicated return type
+	})) as any;
+
+	const owner = object.data?.content?.fields?.owner;
+	if (owner) {
+		return ok(owner);
+	}
+	return err("OWNER_NOT_FOUND");
+}

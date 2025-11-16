@@ -17,6 +17,7 @@ public struct Podcast has key {
     source_file_uri: String,
     title: String,
     nonce: String,
+    channel_id: ID,
     description: String,
     created_at: u64,
 }
@@ -38,6 +39,7 @@ public fun new(
         source_file_uri,
         nonce,
         title,
+        channel_id: object::id(channel),
         description,
         created_at: ctx.epoch_timestamp_ms(),
     };

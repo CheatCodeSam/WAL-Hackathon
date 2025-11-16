@@ -4,11 +4,13 @@ import {
 	useCurrentAccount,
 	useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
+import Link from "next/link";
 import { useNetworkVariable } from "~/app/networkConfig";
-import type { PodcastViewInterface } from "~/services/backend/podcast/lookupPodcast";
+import { Button } from "~/components/ui/button";
+import type { PodcastView } from "~/services/backend/podcast/lookupPodcast";
 
 export interface PodcastPageViewProps {
-	podcast: PodcastViewInterface;
+	podcast: PodcastView;
 }
 
 export function PodcastPageView(props: PodcastPageViewProps) {
@@ -22,9 +24,22 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 	return (
 		<div className="min-h-screen bg-gray-50 p-8">
 			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
+				<div className="mb-6">
+					<Button variant="outline" asChild>
+						<Link href={`/${podcast.owner}`}>
+							← Back to {podcast.owner}'s channel
+						</Link>
+					</Button>
+				</div>
+
 				<h1 className="mb-6 font-bold text-3xl">Podcast Details</h1>
 
 				<div className="space-y-4">
+					<div>
+						<span className="font-semibold">Owner:</span>
+						<p className="text-gray-700">{podcast.owner}</p>
+					</div>
+
 					<div>
 						<span className="font-semibold">Title:</span>
 						<p className="text-gray-700">{podcast.title}</p>
@@ -43,7 +58,7 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 					<div>
 						<span className="font-semibold">Source File Blob ID:</span>
 						<p className="break-all font-mono text-gray-700 text-sm">
-							{podcast.source_file_blob_id}
+							{podcast.source_file_uri}
 						</p>
 					</div>
 
