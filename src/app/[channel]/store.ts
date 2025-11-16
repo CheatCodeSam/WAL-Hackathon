@@ -26,7 +26,7 @@ export interface ChannelPageState {
 	setNoWallet: () => void;
 	startChecking: () => void;
 	setSubscribed: () => void;
-	setUnsubscribed: () => void;
+	setExpiredSubscription: () => void;
 	setNotSubscribed: () => void;
 	setCheckError: (error: string) => void;
 
@@ -90,7 +90,7 @@ export const useChannelPageStore = create<ChannelPageState>((set, get) => ({
 			error: null,
 		}),
 
-	setUnsubscribed: () =>
+	setExpiredSubscription: () =>
 		set({
 			status: "expired_subscription",
 			action: "none",

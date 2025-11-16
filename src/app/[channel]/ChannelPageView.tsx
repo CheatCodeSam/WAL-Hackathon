@@ -46,6 +46,7 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		setCheckError,
 		startSubscribing,
 		finishSubscribing,
+		setExpiredSubscription,
 		failSubscribing,
 		startUnsubscribing,
 		finishUnsubscribing,
@@ -77,8 +78,13 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		} else if (isSubscribedQuery.isError) {
 			setCheckError(isSubscribedQuery.error.message);
 		} else if (isSubscribedQuery.data !== undefined) {
-			if (isSubscribedQuery.data) {
-				setSubscribed();
+			const subscriptionResult = isSubscribedQuery.data;
+			if (subscriptionResult.hasSubscription) {
+				if (subscriptionResult.isActive) {
+					setSubscribed();
+				} else {
+					setExpiredSubscription();
+				}
 			} else {
 				setNotSubscribed();
 			}
@@ -90,6 +96,7 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		isSubscribedQuery.data,
 		isSubscribedQuery.error,
 		startChecking,
+		setExpiredSubscription,
 		setSubscribed,
 		setNotSubscribed,
 		setCheckError,

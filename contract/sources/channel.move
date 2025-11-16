@@ -241,6 +241,15 @@ public fun is_address_subscribed(channel: &mut Channel, addr: address): bool {
     channel.subscribers.contains(addr)
 }
 
+public fun is_address_subscription_active(
+    channel: &mut Channel,
+    addr: address,
+    ctx: &mut TxContext,
+): bool {
+    let subscription = channel.subscribers.borrow(addr);
+    subscription.end_timestamp > ctx.epoch_timestamp_ms()
+}
+
 // === Package Functions ===
 
 public(package) fun authorize_address_for_channel(
