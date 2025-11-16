@@ -12,6 +12,8 @@ export type GetPublishedPodcastsError =
 	| "FAILED_TO_FETCH_DYNAMIC_FIELDS"
 	| "PODCAST_OBJECT_NOT_FOUND";
 
+export type LookupSuinsError = "MALFORMED_SUI_ADDRESS";
+
 export interface PodcastChannelViewInterface {
 	id: string;
 	title: string;
@@ -36,6 +38,25 @@ export interface ChannelViewInterface {
 }
 
 const SUI_ADDRESS_REGEX = /^0[xX][a-fA-F0-9]{64}$/;
+
+export async function lookupSuinsName(
+	address: string,
+): Promise<Result<string | undefined, LookupSuinsError>> {
+	if (SUI_ADDRESS_REGEX.test(address)) {
+		// biome-ignore lint/suspicious/noExplicitAny: It's a jsonRPC response
+		const x: any = await suiClient.jsonRpc.call(
+			"suix_resolveNameServiceNames",
+			[address],
+		);
+		if (x?.data?.length > 0) {
+			const suinsName = x.data.at(0) as string;
+			return ok(suinsName);
+		}
+	} else {
+		return err("MALFORMED_SUI_ADDRESS");
+	}
+	return ok(undefined);
+}
 
 export async function lookupChannel(
 	addressOrSuins: string,

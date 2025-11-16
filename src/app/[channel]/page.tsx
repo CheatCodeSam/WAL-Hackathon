@@ -3,6 +3,7 @@ import { getPodcastsByChannel } from "~/services/api";
 import {
 	getPublishedPodcasts,
 	lookupChannel,
+	lookupSuinsName,
 } from "~/services/backend/channel/lookupChannel";
 import { ChannelPageView } from "./ChannelPageView";
 
@@ -14,6 +15,13 @@ interface PageProps {
 
 export default async function Channel({ params }: PageProps) {
 	const { channel: suiAddress } = await params;
+	const suiNsName = await lookupSuinsName(suiAddress);
+
+	if (suiNsName.isOk()) {
+		if (suiNsName.value) {
+			redirect(`/${suiNsName.value}`);
+		}
+	}
 
 	const channel = await lookupChannel(suiAddress);
 
