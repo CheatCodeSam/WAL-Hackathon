@@ -53,7 +53,10 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	} = useChannelPageStore();
 
 	const isSubscribedQuery = api.channel.isAddressSubscribedToChannel.useQuery(
-		account?.address ?? "",
+		{
+			channelId: channel.channelId,
+			userAddress: account?.address ?? "",
+		},
 		{ enabled: !!account?.address },
 	);
 
@@ -74,19 +77,9 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		} else if (isSubscribedQuery.isError) {
 			setCheckError(isSubscribedQuery.error.message);
 		} else if (isSubscribedQuery.data !== undefined) {
-			// TODO: Update this logic to check if subscription is active or expired
-			// For now, this is a placeholder - you'll need to check:
-			// - If user has subscription object AND it's active -> setSubscribed()
-			// - If user has subscription object BUT it's expired -> setUnsubscribed()
-			// - If user has no subscription object -> setNotSubscribed()
-
 			if (isSubscribedQuery.data) {
-				// TODO: Check if subscription is active or expired
-				// For now assuming active:
 				setSubscribed();
 			} else {
-				// TODO: Check if user has expired subscription object or no object at all
-				// For now assuming no subscription object:
 				setNotSubscribed();
 			}
 		}
@@ -108,7 +101,6 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 
 		startSubscribing();
 		const result = await subscribeToChannel(
-			account.address,
 			channel.channelId,
 			hostingClientAddress,
 			fundsuiPackageId,

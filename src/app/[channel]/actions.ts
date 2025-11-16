@@ -3,15 +3,7 @@ import { err, ok, type Result } from "neverthrow";
 
 export type ChannelSubscribeError = { type: "TRANSACTION_ERROR"; msg: string };
 
-async function checkSubscriptionStatus(
-	userAddress: string,
-	channelId: string,
-): Promise<boolean> {
-	return false;
-}
-
 export async function subscribeToChannel(
-	userAddress: string,
 	channelId: string,
 	frontendAddress: string,
 	fundsuiPackageId: string,
