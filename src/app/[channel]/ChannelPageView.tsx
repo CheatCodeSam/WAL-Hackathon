@@ -12,7 +12,7 @@ import type {
 } from "~/services/backend/channel/lookupChannel";
 import { api } from "~/trpc/react";
 import { useNetworkVariable } from "../networkConfig";
-import { subscribeToChannel } from "./actions";
+import { deleteSubscriptionToChannel, subscribeToChannel } from "./actions";
 import { useChannelPageStore } from "./store";
 
 export interface ChannelPageViewProps {
@@ -118,14 +118,16 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const handleUnsubscribe = async () => {
 		if (!canUnsubscribe() || !account?.address) return;
 
-		try {
-			startUnsubscribing();
-			// TODO: Implement your unsubscribe logic here
+		startUnsubscribing();
+		const result = await deleteSubscriptionToChannel(
+			channel.channelId,
+			fundsuiPackageId,
+			mutateAsync,
+		);
+		if (result.isErr()) {
+			failUnsubscribing(result.error.msg);
+		} else {
 			finishUnsubscribing();
-		} catch (err) {
-			failUnsubscribing(
-				err instanceof Error ? err.message : "Failed to unsubscribe",
-			);
 		}
 	};
 
@@ -143,17 +145,14 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 
 	const handleButtonClick = () => {
 		if (status === "no_wallet") {
-			// TODO: Implement wallet connection logic or show a message
 			return;
 		}
 		if (status === "expired_subscription") {
 			// User has expired subscription object, delete it
 			handleUnsubscribe();
 		} else if (status === "not_subscribed" || status === "error") {
-			// User has no subscription object, create one
 			handleSubscribe();
 		}
-		// Note: subscribed status doesn't allow unsubscribing (button should be disabled)
 	};
 
 	return (

@@ -3,6 +3,29 @@ import { err, ok, type Result } from "neverthrow";
 
 export type ChannelSubscribeError = { type: "TRANSACTION_ERROR"; msg: string };
 
+export async function deleteSubscriptionToChannel(
+	channelId: string,
+	fundsuiPackageId: string,
+	// biome-ignore lint/suspicious/noExplicitAny: type is too complicated.
+	mutateAsync: any,
+) {
+	const tx = new Transaction();
+
+	tx.moveCall({
+		arguments: [tx.object(channelId)],
+		target: `${fundsuiPackageId}::channel::delete_expired_subscription`,
+	});
+
+	try {
+		await mutateAsync({
+			transaction: tx,
+		});
+		return ok();
+	} catch (error) {
+		return err({ type: "TRANSACTION_ERROR", msg: `${error}` });
+	}
+}
+
 export async function subscribeToChannel(
 	channelId: string,
 	frontendAddress: string,
