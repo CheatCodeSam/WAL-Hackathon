@@ -241,11 +241,7 @@ public fun is_address_subscribed(channel: &mut Channel, addr: address): bool {
     channel.subscribers.contains(addr)
 }
 
-public fun is_address_subscription_active(
-    channel: &mut Channel,
-    addr: address,
-    ctx: &mut TxContext,
-): bool {
+public fun is_address_subscription_active(channel: &Channel, addr: address, ctx: &TxContext): bool {
     let subscription = channel.subscribers.borrow(addr);
     subscription.end_timestamp > ctx.epoch_timestamp_ms()
 }

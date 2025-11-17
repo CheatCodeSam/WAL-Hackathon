@@ -16,7 +16,7 @@ public struct Podcast has key {
     id: UID,
     source_file_uri: String,
     title: String,
-    nonce: String,
+    nonce: vector<u8>,
     channel_id: ID,
     description: String,
     created_at: u64,
@@ -26,7 +26,7 @@ public fun new(
     channel: &mut Channel,
     registry: &ChannelRegistry,
     title: String,
-    nonce: String,
+    nonce: vector<u8>,
     description: String,
     source_file_uri: String,
     ctx: &mut TxContext,
@@ -60,4 +60,12 @@ public fun delete_podcast(
     let sender = ctx.sender();
     assert!(authorize_address_for_channel(sender, registry, channel), EUnauthorizedAccess);
     remove_podcast_from_channel(channel, podcast_id)
+}
+
+public fun get_nonce(podcast: &Podcast): vector<u8> {
+    return podcast.nonce
+}
+
+public fun get_channel_id(podcast: &Podcast): ID {
+    return podcast.channel_id
 }
