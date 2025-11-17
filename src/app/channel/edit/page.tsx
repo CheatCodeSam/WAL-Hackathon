@@ -95,7 +95,7 @@ export default function EditChannelPage() {
 					: channelQuery.data.subscriptionPriceInMist;
 
 				const maxDuration = value.maxSubscriptionDurationInWeeks
-					? Number.parseInt(value.maxSubscriptionDurationInWeeks)
+					? Number.parseInt(value.maxSubscriptionDurationInWeeks, 10)
 					: channelQuery.data.maxSubscriptionDurationInWeeks;
 
 				tx.moveCall({

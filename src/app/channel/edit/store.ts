@@ -27,7 +27,7 @@ export interface ChannelEditPageState {
 }
 
 export const useChannelEditPageStore = create<ChannelEditPageState>(
-	(set, get) => ({
+	(set, _get) => ({
 		status: "loading",
 		error: null,
 		uploadProgress: "",
