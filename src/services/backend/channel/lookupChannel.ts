@@ -1,18 +1,11 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { err, ok, type Result } from "neverthrow";
 import { env } from "~/env";
-import { suiClient, suinsClient } from "~/server/sui";
-
-export type LookUpChannelError =
-	| "CANNOT_FIND_SUINS_NAME"
-	| "MALFORMED_SUI_ADDRESS"
-	| "CHANNEL_NOT_FOUND_FOR_ADDRESS";
-
-export type GetPublishedPodcastsError =
-	| "FAILED_TO_FETCH_DYNAMIC_FIELDS"
-	| "PODCAST_OBJECT_NOT_FOUND";
-
-export type LookupSuinsError = "MALFORMED_SUI_ADDRESS";
+import { suiClient } from "~/server/sui";
+import {
+	type ResolveSuinsOrGetAddressError,
+	resolveSuinsOrGetAddress,
+} from "../suins/lookupSuins";
 
 export interface PodcastChannelViewInterface {
 	id: string;
@@ -37,66 +30,28 @@ export interface ChannelViewInterface {
 	subscribersTable: string;
 }
 
-const SUI_ADDRESS_REGEX = /^0[xX][a-fA-F0-9]{64}$/;
-
-export async function lookupSuinsName(
-	address: string,
-): Promise<Result<string | undefined, LookupSuinsError>> {
-	if (SUI_ADDRESS_REGEX.test(address)) {
-		// biome-ignore lint/suspicious/noExplicitAny: It's a jsonRPC response
-		const x: any = await suiClient.jsonRpc.call(
-			"suix_resolveNameServiceNames",
-			[address],
-		);
-		if (x?.data?.length > 0) {
-			const suinsName = x.data.at(0) as string;
-			return ok(suinsName);
-		}
-	} else {
-		return err("MALFORMED_SUI_ADDRESS");
-	}
-	return ok(undefined);
-}
-
-export async function getSuinsNameOrAddress(address: string): Promise<string> {
-	const name = await lookupSuinsName(address);
-	if (name.isOk() && name.value) return name.value;
-	else return address;
-}
+export type LookUpChannelError =
+	| ResolveSuinsOrGetAddressError
+	| GetChannelForAddressError;
 
 export async function lookupChannel(
 	addressOrSuins: string,
 ): Promise<Result<ChannelViewInterface, LookUpChannelError>> {
-	let resolvedAddress: string;
-	if (addressOrSuins.endsWith(".sui")) {
-		const addressRet = await getSuiAddress(addressOrSuins);
-		if (addressRet.isErr()) return err(addressRet.error);
-		resolvedAddress = addressRet.value;
-	} else if (SUI_ADDRESS_REGEX.test(addressOrSuins)) {
-		resolvedAddress = addressOrSuins;
-	} else {
-		return err("MALFORMED_SUI_ADDRESS");
-	}
+	const resolvedAddress = await resolveSuinsOrGetAddress(addressOrSuins);
 
-	const channelResult = await getChannelForAddress(resolvedAddress);
+	if (resolvedAddress.isErr()) return err(resolvedAddress.error);
+
+	const channelResult = await getChannelForAddress(resolvedAddress.value);
 	if (channelResult.isErr()) return err(channelResult.error);
 
 	return ok(channelResult.value);
 }
 
-export async function getSuiAddress(
-	suins: string,
-): Promise<Result<string, LookUpChannelError>> {
-	const nameRecord = await suinsClient.getNameRecord(suins);
-	if (!nameRecord) {
-		return err("CANNOT_FIND_SUINS_NAME");
-	}
-	return ok(nameRecord.targetAddress);
-}
+export type GetChannelForAddressError = "CHANNEL_NOT_FOUND_FOR_ADDRESS";
 
 export async function getChannelForAddress(
 	address: string,
-): Promise<Result<ChannelViewInterface, LookUpChannelError>> {
+): Promise<Result<ChannelViewInterface, GetChannelForAddressError>> {
 	const tx = new Transaction();
 	tx.moveCall({
 		target: `${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::channel::get_channel_id_for_address`,
@@ -149,6 +104,10 @@ export async function getChannelForAddress(
 
 	return err("CHANNEL_NOT_FOUND_FOR_ADDRESS");
 }
+
+export type GetPublishedPodcastsError =
+	| "FAILED_TO_FETCH_DYNAMIC_FIELDS"
+	| "PODCAST_OBJECT_NOT_FOUND";
 
 export async function getPublishedPodcasts(
 	publishedPodcastsTableId: string,

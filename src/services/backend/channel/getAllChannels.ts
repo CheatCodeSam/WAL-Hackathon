@@ -1,9 +1,9 @@
 import { err, ok, type Result } from "neverthrow";
 import { suiClient } from "~/server/sui";
+import { getSuinsNameOrAddress } from "../suins/lookupSuins";
 import {
 	type ChannelViewInterface,
 	getChannelForAddress,
-	getSuinsNameOrAddress,
 } from "./lookupChannel";
 
 export interface ChannelView {
@@ -55,7 +55,9 @@ export async function getAllChannels(
 
 			const retChannel = channel.value;
 
-			retChannel.owner = await getSuinsNameOrAddress(channel.value.owner);
+			const nameOrAddress = await getSuinsNameOrAddress(channel.value.owner);
+			if (nameOrAddress.isOk() && nameOrAddress.value)
+				retChannel.owner = nameOrAddress.value;
 
 			channels.push(retChannel);
 		}

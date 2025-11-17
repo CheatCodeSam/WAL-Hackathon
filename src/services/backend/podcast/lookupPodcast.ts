@@ -1,15 +1,7 @@
 import { err, ok, type Result } from "neverthrow";
 import { suiClient } from "~/server/sui";
-import {
-	getAddressFromChannelId,
-	type getAddressFromChannelIdErrors,
-	type LookupSuinsError,
-	lookupSuinsName,
-} from "../channel/lookupChannel";
-
-export type LookUpPodcastError =
-	| "MALFORMED_SUI_ADDRESS"
-	| "PODCAST_NOT_FOUND_FOR_ADDRESS";
+import { getAddressFromChannelId } from "../channel/lookupChannel";
+import { lookupSuinsName, SUI_ADDRESS_REGEX } from "../suins/lookupSuins";
 
 export interface PodcastViewInterface {
 	id: string;
@@ -34,7 +26,9 @@ export interface PodcastView {
 	created_at: number;
 }
 
-const SUI_ADDRESS_REGEX = /^0[xX][a-fA-F0-9]{64}$/;
+export type LookUpPodcastError =
+	| "MALFORMED_SUI_ADDRESS"
+	| "PODCAST_NOT_FOUND_FOR_ADDRESS";
 
 export async function lookupPodcast(
 	podcastAddress: string,

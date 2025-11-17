@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BsCast } from "react-icons/bs";
-import { MdClose, MdDashboard, MdMenu, MdLock, MdPlayArrow, MdCardMembership } from "react-icons/md";
+import {
+	MdCardMembership,
+	MdClose,
+	MdDashboard,
+	MdLock,
+	MdMenu,
+	MdPlayArrow,
+} from "react-icons/md";
 import { RiCompassDiscoverLine } from "react-icons/ri";
 
 const Navbar = () => {
@@ -42,7 +49,7 @@ const Navbar = () => {
 					{/* Desktop Navigation */}
 					<ul className="hidden items-center gap-2 md:flex">
 						<li>
-							<Link className={navLinkClass("/browse")} href="/browse">
+							<Link className={navLinkClass("/explore")} href="/explore">
 								<RiCompassDiscoverLine className="text-xl" />
 								<span>Explore</span>
 							</Link>
@@ -82,6 +89,7 @@ const Navbar = () => {
 
 					{/* Mobile Menu Button */}
 					<button
+						type="button"
 						aria-label="Toggle menu"
 						className="rounded-lg p-2 transition-colors hover:bg-gray-100 md:hidden"
 						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

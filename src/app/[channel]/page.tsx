@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import { getPodcastsByChannel } from "~/services/api";
 import {
 	getPublishedPodcasts,
 	lookupChannel,
-	lookupSuinsName,
 } from "~/services/backend/channel/lookupChannel";
+import { lookupSuinsName } from "~/services/backend/suins/lookupSuins";
 import { ChannelPageView } from "./ChannelPageView";
 
 interface PageProps {
