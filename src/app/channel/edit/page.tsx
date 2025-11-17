@@ -8,10 +8,11 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { uploadImage } from "~/services/walrus-utils";
 import { api } from "~/trpc/react";
 import { useNetworkVariable } from "../../networkConfig";
+import { useChannelEditPageStore } from "./store";
 
 export default function EditChannelPage() {
 	const account = useCurrentAccount();
@@ -21,12 +22,21 @@ export default function EditChannelPage() {
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
-	const [uploadProgress, setUploadProgress] = useState<string>("");
-	const [status, setStatus] = useState<"idle" | "loading" | "submitting">(
-		"loading",
-	);
+	const {
+		status,
+		error,
+		uploadProgress,
+		setNoWallet,
+		startLoading,
+		setLoaded,
+		setNoChannel,
+		setLoadError,
+		startUpdating,
+		finishUpdating,
+		failUpdating,
+		setUploadProgress,
+	} = useChannelEditPageStore();
 
-	// Fetch existing channel data
 	const channelQuery = api.channel.getChannelByOwner.useQuery(
 		account?.address ?? "",
 		{
@@ -50,10 +60,8 @@ export default function EditChannelPage() {
 			if (!account?.address || !channelQuery.data) return;
 
 			try {
-				setStatus("submitting");
-				setUploadProgress("Preparing to update channel...");
+				startUpdating();
 
-				// Upload profile picture if a new one is selected
 				let profilePictureUri = channelQuery.data.profilePhotoUri;
 				if (value.profilePicture) {
 					setUploadProgress("Uploading new profile picture to Walrus...");
@@ -65,7 +73,6 @@ export default function EditChannelPage() {
 					profilePictureUri = profileResult.blobId;
 				}
 
-				// Upload cover photo if a new one is selected
 				let coverPhotoUri = channelQuery.data.coverPhotoUri;
 				if (value.coverPhoto) {
 					setUploadProgress("Uploading new cover photo to Walrus...");
@@ -81,8 +88,6 @@ export default function EditChannelPage() {
 
 				const tx = new Transaction();
 
-				// Convert subscription price from dollars to mist (SUI smallest unit)
-				// 1 SUI = 1,000,000,000 MIST
 				const subscriptionPriceInMist = value.subscriptionPrice
 					? Math.floor(
 							Number.parseFloat(value.subscriptionPrice) * 1_000_000_000,
@@ -121,25 +126,22 @@ export default function EditChannelPage() {
 								})
 								.then(async (result) => {
 									console.log("Channel updated:", result);
-									setUploadProgress(
-										"Channel updated successfully! Redirecting...",
-									);
-									setStatus("idle");
+									finishUpdating();
 									// Redirect to the user's channel page
 									router.push(`/${account.address}`);
 								})
 								.catch((err) => {
-									setStatus("idle");
-									setUploadProgress(
-										`Error waiting for transaction: ${err instanceof Error ? err.message : "Unknown error"}`,
+									const errorMessage =
+										err instanceof Error ? err.message : "Unknown error";
+									failUpdating(
+										`Error waiting for transaction: ${errorMessage}`,
 									);
 								});
 						},
 						onError: (err) => {
-							setStatus("idle");
-							setUploadProgress(
-								`Transaction rejected: ${err instanceof Error ? err.message : "Unknown error"}`,
-							);
+							const errorMessage =
+								err instanceof Error ? err.message : "Unknown error";
+							failUpdating(`Transaction rejected: ${errorMessage}`);
 						},
 					},
 				);
@@ -147,30 +149,55 @@ export default function EditChannelPage() {
 				console.error("Error updating channel:", error);
 				const errorMessage =
 					error instanceof Error ? error.message : "Failed to update channel";
-				setStatus("idle");
-				setUploadProgress(`Error: ${errorMessage}`);
+				failUpdating(errorMessage);
 			}
 		},
 	});
 
-	// Pre-populate form with existing channel data
 	useEffect(() => {
-		if (channelQuery.isSuccess && channelQuery.data) {
-			const channel = channelQuery.data;
-			// Convert mist to SUI for display
-			const priceInSui = channel.subscriptionPriceInMist / 1_000_000_000;
-
-			form.setFieldValue("displayName", channel.displayName);
-			form.setFieldValue("tagline", channel.tagLine);
-			form.setFieldValue("description", channel.description);
-			form.setFieldValue("subscriptionPrice", priceInSui.toString());
-			form.setFieldValue(
-				"maxSubscriptionDurationInWeeks",
-				channel.maxSubscriptionDurationInWeeks.toString(),
-			);
-			setStatus("idle");
+		if (!account?.address) {
+			setNoWallet();
+			return;
 		}
-	}, [channelQuery.isSuccess, channelQuery.data, form.setFieldValue]);
+
+		if (channelQuery.isPending) {
+			startLoading();
+		} else if (channelQuery.isError) {
+			setLoadError(
+				channelQuery.error?.message || "Failed to load channel data",
+			);
+		} else if (channelQuery.isSuccess) {
+			if (!channelQuery.data) {
+				setNoChannel();
+			} else {
+				const channel = channelQuery.data;
+				const priceInSui = channel.subscriptionPriceInMist / 1_000_000_000;
+
+				form.setFieldValue("displayName", channel.displayName);
+				form.setFieldValue("tagline", channel.tagLine);
+				form.setFieldValue("description", channel.description);
+				form.setFieldValue("subscriptionPrice", priceInSui.toString());
+				form.setFieldValue(
+					"maxSubscriptionDurationInWeeks",
+					channel.maxSubscriptionDurationInWeeks.toString(),
+				);
+				setLoaded();
+			}
+		}
+	}, [
+		account?.address,
+		channelQuery.isPending,
+		channelQuery.isError,
+		channelQuery.isSuccess,
+		channelQuery.data,
+		channelQuery.error,
+		setNoWallet,
+		startLoading,
+		form.setFieldValue,
+		setLoadError,
+		setNoChannel,
+		setLoaded,
+	]);
 
 	if (!account?.address) {
 		return (
@@ -185,7 +212,7 @@ export default function EditChannelPage() {
 		);
 	}
 
-	if (status === "loading" || channelQuery.isPending) {
+	if (status === "loading") {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-50 p-8">
 				<div className="mx-auto max-w-md rounded-lg bg-white p-6 text-center shadow-md">
@@ -196,14 +223,33 @@ export default function EditChannelPage() {
 		);
 	}
 
-	if (channelQuery.isError || !channelQuery.data) {
+	if (status === "error") {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-gray-50 p-8">
 				<div className="mx-auto max-w-md rounded-lg bg-white p-6 text-center shadow-md">
 					<h1 className="mb-4 font-bold text-2xl text-red-600">Error</h1>
+					<p className="mb-4 text-gray-600">{error}</p>
+					<button
+						className="rounded-md bg-blue-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-600"
+						onClick={() => channelQuery.refetch()}
+						type="button"
+					>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	if (status === "no_channel") {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-gray-50 p-8">
+				<div className="mx-auto max-w-md rounded-lg bg-white p-6 text-center shadow-md">
+					<h1 className="mb-4 font-bold text-2xl text-red-600">
+						No Channel Found
+					</h1>
 					<p className="mb-4 text-gray-600">
-						{channelQuery.error?.message ||
-							"Channel not found. Please create a channel first."}
+						You need to create a channel before you can edit it.
 					</p>
 					<button
 						className="rounded-md bg-blue-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-600"
@@ -422,13 +468,19 @@ export default function EditChannelPage() {
 					</div>
 				)}
 
+				{error && (
+					<div className="rounded-md border border-red-200 bg-red-50 p-4">
+						<p className="text-red-700 text-sm">{error}</p>
+					</div>
+				)}
+
 				<div className="pt-4">
 					<button
 						className="w-full rounded-md bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-						disabled={status === "submitting"}
+						disabled={status === "updating"}
 						type="submit"
 					>
-						{status === "submitting" ? "Updating Channel..." : "Update Channel"}
+						{status === "updating" ? "Updating Channel..." : "Update Channel"}
 					</button>
 				</div>
 			</form>
