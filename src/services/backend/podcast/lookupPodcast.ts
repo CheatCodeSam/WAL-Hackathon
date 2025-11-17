@@ -23,6 +23,7 @@ export interface PodcastView {
 	channel_id: string;
 	nonce: string;
 	owner: string;
+	owner_address: string;
 	created_at: number;
 }
 
@@ -76,6 +77,7 @@ export async function lookupPodcastWithOwner(
 	else ownerName = owner.value;
 	return ok({
 		...podcast.value,
+		owner_address: owner.value,
 		owner: ownerName,
 	});
 }

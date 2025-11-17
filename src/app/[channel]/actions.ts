@@ -34,7 +34,7 @@ export async function subscribeToChannel(
 	mutateAsync: any,
 ): Promise<Result<void, ChannelSubscribeError>> {
 	const tx = new Transaction();
-	const [paymentCoin] = tx.splitCoins(tx.gas, [20000]);
+	const [paymentCoin] = tx.splitCoins(tx.gas, [10000000 * 2]);
 
 	tx.moveCall({
 		arguments: [

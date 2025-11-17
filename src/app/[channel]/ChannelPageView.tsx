@@ -172,11 +172,22 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 							{getButtonText()}
 						</Button>
 						{isOwner && (
-							<Link href="/upload">
-								<Button className="cursor-pointer" type="button">
-									Upload New Episode
-								</Button>
-							</Link>
+							<>
+								<Link href="/channel/edit">
+									<Button
+										className="cursor-pointer"
+										type="button"
+										variant="outline"
+									>
+										Edit Channel
+									</Button>
+								</Link>
+								<Link href="/upload">
+									<Button className="cursor-pointer" type="button">
+										Upload New Episode
+									</Button>
+								</Link>
+							</>
 						)}
 					</div>
 					{error && <p className="text-red-600 text-sm">Error: {error}</p>}
