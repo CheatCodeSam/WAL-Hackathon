@@ -29,6 +29,8 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
+	console.log(props.channel);
+
 	const isOwner = account?.address === channel.owner;
 
 	const {

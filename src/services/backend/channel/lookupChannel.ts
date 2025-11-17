@@ -58,6 +58,12 @@ export async function lookupSuinsName(
 	return ok(undefined);
 }
 
+export async function getSuinsNameOrAddress(address: string): Promise<string> {
+	const name = await lookupSuinsName(address);
+	if (name.isOk() && name.value) return name.value;
+	else return address;
+}
+
 export async function lookupChannel(
 	addressOrSuins: string,
 ): Promise<Result<ChannelViewInterface, LookUpChannelError>> {
@@ -88,7 +94,7 @@ export async function getSuiAddress(
 	return ok(nameRecord.targetAddress);
 }
 
-async function getChannelForAddress(
+export async function getChannelForAddress(
 	address: string,
 ): Promise<Result<ChannelViewInterface, LookUpChannelError>> {
 	const tx = new Transaction();
