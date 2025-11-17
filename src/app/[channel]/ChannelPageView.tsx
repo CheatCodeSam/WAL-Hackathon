@@ -18,11 +18,13 @@ import { useChannelPageStore } from "./store";
 export interface ChannelPageViewProps {
 	channel: ChannelViewInterface;
 	podcasts: PodcastChannelViewInterface[];
+	channelIdentifier: string;
 }
 
 export function ChannelPageView(props: ChannelPageViewProps) {
 	const channel = props.channel;
 	const podcasts = props.podcasts;
+	const channelIdentifier = props.channelIdentifier;
 
 	const account = useCurrentAccount();
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
@@ -256,7 +258,7 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 							{podcasts.map((podcast) => (
 								<Link
 									key={podcast.id}
-									href={`/${channel.owner}/${podcast.id}`}
+									href={`/${channelIdentifier}/${podcast.id}`}
 									className="block rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
 								>
 									<div className="font-semibold text-lg">{podcast.title}</div>

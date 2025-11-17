@@ -1,6 +1,5 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { getAllChannels, getChannelDetails } from "~/services/api";
 import { lookupChannel } from "~/services/backend/channel/lookupChannel";
 import { isAddressSubscribedToChannel } from "~/services/backend/subscription/lookupSubscription";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -28,12 +27,5 @@ export const channelRouter = createTRPCRouter({
 			});
 		}
 		return channel.value;
-	}),
-	list: publicProcedure.query(async () => {
-		return await getAllChannels();
-	}),
-	byId: publicProcedure.input(z.string()).query(async (opts) => {
-		const { input } = opts;
-		return await getChannelDetails(input);
 	}),
 });

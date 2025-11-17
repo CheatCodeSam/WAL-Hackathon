@@ -1,9 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAddressFromChannelId } from "~/services/backend/channel/lookupChannel";
-import {
-	lookupPodcast,
-	lookupPodcastWithOwner,
-} from "~/services/backend/podcast/lookupPodcast";
+import { lookupPodcastWithOwner } from "~/services/backend/podcast/lookupPodcast";
 import { PodcastPageView } from "./PodcastPageView";
 
 interface PageProps {
@@ -14,20 +10,35 @@ interface PageProps {
 }
 
 export default async function Podcast({ params }: PageProps) {
-	const { podcast: suiAddress } = await params;
+	const { channel: channelParam, podcast: podcastId } = await params;
 
-	const podcast = await lookupPodcastWithOwner(suiAddress);
+	const podcast = await lookupPodcastWithOwner(podcastId);
 
 	if (podcast.isErr()) {
-		const error = podcast.error;
-
-		switch (error) {
-			case "PODCAST_NOT_FOUND_FOR_ADDRESS":
-			case "MALFORMED_SUI_ADDRESS":
-				redirect("/404");
-		}
-	} else {
-		const podcastData = podcast.value;
-		return <PodcastPageView podcast={podcastData} />;
+		redirect("/404");
 	}
+
+	const podcastData = podcast.value;
+
+	// Check if the channel param matches the podcast owner
+	// channelParam could be either the SuiNS name or the address
+	const isValidChannel =
+		channelParam === podcastData.owner ||
+		channelParam === podcastData.owner_address;
+
+	if (!isValidChannel) {
+		// Channel param doesn't match the owner at all - redirect to 404
+		redirect("/404");
+	}
+
+	// If they used the address but there's a SuiNS name, redirect to the SuiNS name URL
+	if (
+		channelParam === podcastData.owner_address &&
+		podcastData.owner !== podcastData.owner_address
+	) {
+		// They have a SuiNS name, redirect to use it
+		redirect(`/${podcastData.owner}/${podcastId}`);
+	}
+
+	return <PodcastPageView podcast={podcastData} />;
 }

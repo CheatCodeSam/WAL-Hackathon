@@ -13,8 +13,8 @@ interface PageProps {
 }
 
 export default async function Channel({ params }: PageProps) {
-	const { channel: suiAddress } = await params;
-	const suiNsName = await lookupSuinsName(suiAddress);
+	const { channel: channelParam } = await params;
+	const suiNsName = await lookupSuinsName(channelParam);
 
 	if (suiNsName.isOk()) {
 		if (suiNsName.value) {
@@ -22,7 +22,7 @@ export default async function Channel({ params }: PageProps) {
 		}
 	}
 
-	const channel = await lookupChannel(suiAddress);
+	const channel = await lookupChannel(channelParam);
 
 	if (channel.isErr()) {
 		const error = channel.error;
@@ -45,5 +45,13 @@ export default async function Channel({ params }: PageProps) {
 
 	const podcastData = podcasts.value;
 
-	return <ChannelPageView channel={channelData} podcasts={podcastData} />;
+	// Pass the channelParam (which could be SuiNS name or address) to the view
+	// This is used for constructing proper podcast URLs
+	return (
+		<ChannelPageView
+			channel={channelData}
+			podcasts={podcastData}
+			channelIdentifier={channelParam}
+		/>
+	);
 }
