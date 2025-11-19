@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
 import { useSeal } from "~/app/SealProvider";
+import { lookupSuinsName } from "~/services/backend/suins/lookupSuins";
 import { formatFileSize, uploadEncryptedAudio } from "~/services/walrus-utils";
 import { api } from "~/trpc/react";
 import { useUploadPageStore } from "./store";
@@ -185,7 +186,28 @@ export default function Upload() {
 									);
 
 									if (podcastObject && podcastObject.type === "created") {
-										finishUpload(value.channel, podcastObject.objectId);
+										// Get owner address from channel details
+										const ownerAddress = channelQuery.data?.owner;
+										let redirectIdentifier = ownerAddress || value.channel;
+
+										if (ownerAddress) {
+											// Attempt to fetch SuiNS name
+											// Note: lookupSuinsName is an async function, but we are inside a promise chain.
+											// However, we are inside a .then() of waitForTransaction.
+											try {
+												const suinsResult = await lookupSuinsName(ownerAddress);
+												if (suinsResult.isOk() && suinsResult.value) {
+													redirectIdentifier = suinsResult.value;
+												}
+											} catch (e) {
+												console.warn(
+													"Failed to resolve SuiNS name for redirect:",
+													e,
+												);
+											}
+										}
+
+										finishUpload(redirectIdentifier, podcastObject.objectId);
 									} else {
 										failUpload("Failed to get podcast ID from transaction");
 									}
