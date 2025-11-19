@@ -28,6 +28,7 @@ export interface ChannelViewInterface {
 	maxSubscriptionDurationInWeeks: number;
 	podcastsTable: string;
 	subscribersTable: string;
+	numberOfPodcasts: number;
 }
 
 export type LookUpChannelError =
@@ -95,6 +96,7 @@ export async function getChannelForAddress(
 					),
 					podcastsTable: fields.published_podcasts.fields.id.id,
 					subscribersTable: fields.subscribers.fields.id.id,
+					numberOfPodcasts: Number(fields.published_podcasts.fields.size),
 				};
 
 				return ok(channelView);

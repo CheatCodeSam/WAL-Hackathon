@@ -247,6 +247,10 @@ public fun is_address_subscription_active(channel: &Channel, addr: address, cloc
     subscription.end_timestamp > clock.timestamp_ms()
 }
 
+public fun number_of_podcasts(channel: &Channel): u64 {
+    return channel.published_podcasts.length()
+}
+
 // === Package Functions ===
 
 public(package) fun authorize_address_for_channel(

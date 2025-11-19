@@ -190,11 +190,11 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	};
 
 	const bannerUrl = channel.coverPhotoUri
-		? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}${channel.coverPhotoUri}`
+		? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${channel.coverPhotoUri}`
 		: null;
 
 	const profileUrl = channel.profilePhotoUri
-		? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}${channel.profilePhotoUri}`
+		? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${channel.profilePhotoUri}`
 		: null;
 
 	return (
@@ -391,6 +391,15 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 										</span>
 										<p className="font-medium text-gray-900">
 											{channel.maxSubscriptionDurationInWeeks} weeks
+										</p>
+									</div>
+
+									<div>
+										<span className="block text-gray-500 text-sm">
+											Podcasts
+										</span>
+										<p className="font-medium text-gray-900">
+											{channel.numberOfPodcasts}
 										</p>
 									</div>
 								</div>
