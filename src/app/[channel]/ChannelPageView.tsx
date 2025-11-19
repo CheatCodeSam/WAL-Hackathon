@@ -446,7 +446,11 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 						<div className="grid grid-cols-4 items-center gap-4">
 							<Label className="text-right">Total Cost</Label>
 							<div className="col-span-3 font-medium">
-								{subscriptionWeeks * channel.subscriptionPriceInMist} MIST
+								{(
+									(subscriptionWeeks * channel.subscriptionPriceInMist) /
+									1_000_000_000
+								).toFixed(4)}{" "}
+								SUI
 							</div>
 						</div>
 					</div>
