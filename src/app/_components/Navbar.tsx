@@ -89,10 +89,10 @@ const Navbar = () => {
 
 					{/* Mobile Menu Button */}
 					<button
-						type="button"
 						aria-label="Toggle menu"
 						className="rounded-lg p-2 transition-colors hover:bg-gray-100 md:hidden"
 						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+						type="button"
 					>
 						{isMobileMenuOpen ? (
 							<MdClose className="text-2xl" />

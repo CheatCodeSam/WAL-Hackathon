@@ -86,7 +86,6 @@ export async function uploadToWalrus(
 			},
 		});
 
-
 		if (!response.ok) {
 			const errorText = await response.text();
 			throw new Error(
@@ -149,11 +148,9 @@ export async function uploadData(
 	try {
 		// Upload the file to Walrus publisher
 		const response = await fetch(publisherUrl, {
-			method: 'PUT',
+			method: "PUT",
 			body: data,
 		});
-
-
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -198,7 +195,6 @@ export async function uploadData(
 export function getWalrusUrl(blobId: string): string {
 	return `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${blobId}`;
 }
-
 
 /**
  * Checks if a Walrus blob exists and is accessible

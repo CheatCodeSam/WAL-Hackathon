@@ -1,20 +1,20 @@
 "use client";
 
-import React, {
-	createContext,
-	useContext,
-	useEffect,
-	useMemo,
-	useState,
-	type ReactNode,
-} from "react";
-import { SealClient, SessionKey, EncryptedObject } from "@mysten/seal";
-import { SuiClient } from "@mysten/sui/client";
 import {
 	useCurrentAccount,
 	useSignPersonalMessage,
 	useSignTransaction,
 } from "@mysten/dapp-kit";
+import { EncryptedObject, SealClient, SessionKey } from "@mysten/seal";
+import type { SuiClient } from "@mysten/sui/client";
+import React, {
+	createContext,
+	type ReactNode,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 
 // Types
 export type KeyServer = {

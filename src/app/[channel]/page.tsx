@@ -50,8 +50,8 @@ export default async function Channel({ params }: PageProps) {
 	return (
 		<ChannelPageView
 			channel={channelData}
-			podcasts={podcastData}
 			channelIdentifier={channelParam}
+			podcasts={podcastData}
 		/>
 	);
 }

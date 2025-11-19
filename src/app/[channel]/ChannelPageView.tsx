@@ -3,9 +3,20 @@ import {
 	useCurrentAccount,
 	useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
+import { Edit, MoreVertical, Upload } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { env } from "~/env";
 import type {
 	ChannelViewInterface,
 	PodcastChannelViewInterface,
@@ -30,8 +41,6 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
-
-	console.log(props.channel);
 
 	const isOwner = account?.address === channel.owner;
 
@@ -159,117 +168,213 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		}
 	};
 
+	const bannerUrl = channel.coverPhotoUri
+		? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}${channel.coverPhotoUri}`
+		: null;
+
+	const profileUrl = channel.profilePhotoUri
+		? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}${channel.profilePhotoUri}`
+		: null;
+
 	return (
-		<div className="min-h-screen bg-gray-50 p-8">
-			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
-				<h1 className="mb-6 font-bold text-3xl">Channel Details</h1>
-				<div className="space-y-4">
-					<div className="flex gap-4">
-						<Button
-							className="cursor-pointer"
-							disabled={isLoading() || isOwner}
-							onClick={handleButtonClick}
-							type="button"
-						>
-							{getButtonText()}
-						</Button>
-						{isOwner && (
-							<>
-								<Link href="/channel/edit">
-									<Button
-										className="cursor-pointer"
-										type="button"
-										variant="outline"
-									>
-										Edit Channel
-									</Button>
-								</Link>
-								<Link href="/upload">
-									<Button className="cursor-pointer" type="button">
-										Upload New Episode
-									</Button>
-								</Link>
-							</>
-						)}
-					</div>
-					{error && <p className="text-red-600 text-sm">Error: {error}</p>}
-					<div className="border-gray-300 border-t pt-4 text-gray-600 text-xs">
-						<p>Status: {status}</p>
-						<p>Action: {action}</p>
-						<p>Can Subscribe: {canSubscribe() ? "Yes" : "No"}</p>
-						<p>Can Unsubscribe: {canUnsubscribe() ? "Yes" : "No"}</p>
-						<p>Is Owner: {isOwner ? "Yes" : "No"}</p>
-					</div>
-				</div>
-				<div className="space-y-4">
-					<div>
-						<span className="font-semibold">Owner:</span>
-						<p className="break-all font-mono text-gray-700 text-sm">
-							{channel.owner}
-						</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Display Name:</span>
-						<p className="text-gray-700">{channel.displayName}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Tag Line:</span>
-						<p className="text-gray-700">{channel.tagLine}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Description:</span>
-						<p className="text-gray-700">{channel.description}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Cover Photo URI:</span>
-						<p className="break-all text-gray-700">{channel.coverPhotoUri}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Profile Photo URI:</span>
-						<p className="break-all text-gray-700">{channel.profilePhotoUri}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">Subscription Price (in MIST):</span>
-						<p className="text-gray-700">{channel.subscriptionPriceInMist}</p>
-					</div>
-
-					<div>
-						<span className="font-semibold">
-							Max Subscription Duration (weeks):
-						</span>
-						<p className="text-gray-700">
-							{channel.maxSubscriptionDurationInWeeks}
-						</p>
-					</div>
-				</div>
-
-				<div className="mt-8 space-y-4">
-					<h2 className="font-bold text-2xl">Podcasts</h2>
-					{podcasts.length === 0 ? (
-						<p className="text-gray-600">No podcasts available yet.</p>
+		<div className="min-h-screen bg-gray-50 pt-6 pb-12">
+			<div className="container mx-auto max-w-5xl px-4">
+				{/* Banner Image */}
+				<div className="relative h-48 w-full overflow-hidden rounded-lg bg-gray-200 shadow-sm md:h-64 lg:h-80">
+					{bannerUrl ? (
+						<img
+							alt="Channel Banner"
+							className="h-full w-full object-cover"
+							src={bannerUrl}
+						/>
 					) : (
-						<div className="space-y-2">
-							{podcasts.map((podcast) => (
-								<Link
-									key={podcast.id}
-									href={`/${channelIdentifier}/${podcast.id}`}
-									className="block rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-								>
-									<div className="font-semibold text-lg">{podcast.title}</div>
-									<div className="font-mono text-gray-500 text-xs">
-										{podcast.id}
-									</div>
-								</Link>
-							))}
+						<div className="flex h-full w-full items-center justify-center bg-gradient-to-r from-blue-400 to-purple-500 text-white">
+							<span className="font-bold text-4xl opacity-30">
+								{channel.displayName}
+							</span>
 						</div>
 					)}
 				</div>
+
+				<div className="-mt-16 relative mb-6 flex flex-col items-center px-4 md:mb-8 md:flex-row md:items-end md:space-x-6">
+					{/* Profile Picture */}
+					<Avatar className="h-32 w-32 rounded-full border-4 border-white bg-white shadow-lg md:h-40 md:w-40">
+						<AvatarImage
+							alt={channel.displayName}
+							className="object-cover"
+							src={profileUrl ?? undefined}
+						/>
+						<AvatarFallback className="font-bold text-2xl">
+							{channel.displayName.substring(0, 2).toUpperCase()}
+						</AvatarFallback>
+					</Avatar>
+
+					{/* Header Info */}
+					<div className="mt-4 text-center md:mt-0 md:mb-4 md:text-left">
+						<h1 className="font-bold text-3xl text-gray-900 md:text-4xl">
+							{channel.displayName}
+						</h1>
+						<p className="text-gray-600 text-lg md:text-xl">
+							{channel.tagLine}
+						</p>
+					</div>
+
+					{/* Action Buttons */}
+					<div className="mt-4 flex flex-wrap items-center gap-3 md:mt-0 md:mb-4 md:ml-auto">
+						<Button
+							className="min-w-[140px] cursor-pointer"
+							disabled={isLoading() || isOwner}
+							onClick={handleButtonClick}
+							type="button"
+							variant={status === "subscribed" ? "secondary" : "default"}
+						>
+							{getButtonText()}
+						</Button>
+
+						{isOwner && (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button
+										className="cursor-pointer"
+										size="icon"
+										variant="outline"
+									>
+										<MoreVertical className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<Link href="/channel/edit">
+										<DropdownMenuItem className="cursor-pointer">
+											<Edit className="mr-2 h-4 w-4" />
+											<span>Edit Channel</span>
+										</DropdownMenuItem>
+									</Link>
+									<Link href="/upload">
+										<DropdownMenuItem className="cursor-pointer">
+											<Upload className="mr-2 h-4 w-4" />
+											<span>Upload Episode</span>
+										</DropdownMenuItem>
+									</Link>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						)}
+					</div>
+				</div>
+
+				{/* Subscription Status/Error Messages */}
+				<div className="mb-6">
+					{error && (
+						<div className="rounded-md bg-red-50 p-3 text-red-600 text-sm">
+							Error: {error}
+						</div>
+					)}
+					<div className="text-gray-500 text-xs">
+						{status === "checking" && "Checking subscription status..."}
+					</div>
+				</div>
+
+				{/* Main Content Tabs */}
+				<Tabs className="w-full" defaultValue="episodes">
+					<TabsList className="mb-6 w-full justify-start border-b bg-transparent p-0">
+						<TabsTrigger
+							className="rounded-none border-transparent border-b-2 px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+							value="episodes"
+						>
+							Episodes
+						</TabsTrigger>
+						<TabsTrigger
+							className="rounded-none border-transparent border-b-2 px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+							value="about"
+						>
+							About
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent className="space-y-6" value="episodes">
+						{podcasts.length === 0 ? (
+							<div className="py-12 text-center">
+								<h3 className="mb-2 font-semibold text-gray-900 text-xl">
+									No episodes yet
+								</h3>
+								<p className="text-gray-500">
+									This channel hasn't published any podcasts yet.
+								</p>
+							</div>
+						) : (
+							<div className="grid gap-4">
+								{podcasts.map((podcast) => (
+									<Link
+										className="block transition-transform hover:scale-[1.01]"
+										href={`/${channelIdentifier}/${podcast.id}`}
+										key={podcast.id}
+									>
+										<Card className="hover:border-primary/50 hover:shadow-md">
+											<CardContent className="p-6">
+												<div className="flex items-start justify-between gap-4">
+													<div>
+														<h3 className="mb-2 font-bold text-gray-900 text-xl">
+															{podcast.title}
+														</h3>
+														<p className="mb-2 line-clamp-2 text-gray-600 text-sm">
+															{podcast.description}
+														</p>
+														{/* We could add a description or date here if available in the data */}
+														<div className="truncate font-mono text-gray-400 text-xs">
+															ID: {podcast.id}
+														</div>
+													</div>
+													{/* If podcasts have images, we could add a thumbnail here */}
+												</div>
+											</CardContent>
+										</Card>
+									</Link>
+								))}
+							</div>
+						)}
+					</TabsContent>
+
+					<TabsContent value="about">
+						<Card>
+							<CardContent className="space-y-6 p-6">
+								<div>
+									<h3 className="mb-2 font-semibold text-gray-900 text-lg">
+										Description
+									</h3>
+									<p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+										{channel.description || "No description available."}
+									</p>
+								</div>
+
+								<div className="mt-6 grid grid-cols-1 gap-6 border-t pt-6 sm:grid-cols-2 md:grid-cols-3">
+									<div>
+										<span className="block text-gray-500 text-sm">Owner</span>
+										<p className="break-all font-mono text-gray-900 text-sm">
+											{channel.owner}
+										</p>
+									</div>
+
+									<div>
+										<span className="block text-gray-500 text-sm">
+											Subscription Price
+										</span>
+										<p className="font-medium text-gray-900">
+											{channel.subscriptionPriceInMist} MIST
+										</p>
+									</div>
+
+									<div>
+										<span className="block text-gray-500 text-sm">
+											Max Duration
+										</span>
+										<p className="font-medium text-gray-900">
+											{channel.maxSubscriptionDurationInWeeks} weeks
+										</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+					</TabsContent>
+				</Tabs>
 			</div>
 		</div>
 	);

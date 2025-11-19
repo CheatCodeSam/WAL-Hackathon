@@ -255,7 +255,7 @@ export default function Upload() {
 		return (
 			<div className="container mx-auto max-w-2xl py-8">
 				<h1 className="mb-6 font-bold text-3xl">Upload Podcast</h1>
-				<div className="text-center py-12">
+				<div className="py-12 text-center">
 					<p className="text-gray-600">Loading channel information...</p>
 				</div>
 			</div>
@@ -296,13 +296,13 @@ export default function Upload() {
 								Channel ID
 							</label>
 							<input
-								className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-2 cursor-not-allowed"
+								className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-100 px-4 py-2"
+								disabled
 								id={field.name}
 								onChange={(e) => field.handleChange(e.target.value)}
 								placeholder="Enter channel ID"
 								type="text"
 								value={field.state.value}
-								disabled
 							/>
 						</div>
 					)}
@@ -391,8 +391,8 @@ export default function Upload() {
 							? "bg-red-600 hover:bg-red-700"
 							: "bg-blue-600 hover:bg-blue-700"
 					}`}
-					type="submit"
 					disabled={!canSubmit() || isSubmitting}
+					type="submit"
 				>
 					{isSubmitting
 						? uploadProgress

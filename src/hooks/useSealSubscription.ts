@@ -1,9 +1,9 @@
 "use client";
 
-import { useSeal } from "~/app/SealProvider";
-import { Transaction } from "@mysten/sui/transactions";
 import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 import { useState } from "react";
+import { useSeal } from "~/app/SealProvider";
 
 export type EncryptedContent = {
 	encryptedData: Uint8Array;
@@ -26,7 +26,6 @@ export const useSealSubscription = (packageId: string) => {
 	): Promise<EncryptedContent> => {
 		setIsLoading(true);
 		try {
-
 			const { encryptedObject } = await encrypt(content, {
 				identity: nouce,
 				threshold,
@@ -34,7 +33,7 @@ export const useSealSubscription = (packageId: string) => {
 
 			return {
 				encryptedData: encryptedObject,
-        nouce,
+				nouce,
 			};
 		} finally {
 			setIsLoading(false);
@@ -47,9 +46,9 @@ export const useSealSubscription = (packageId: string) => {
 	const decryptSubscribedContent = async (
 		encryptedData: Uint8Array,
 		subscriptionObjectId: string,
-    podcastId: string,
+		podcastId: string,
 		nouce: string,
-    channelId: string,
+		channelId: string,
 	): Promise<Uint8Array> => {
 		if (!currentAccount?.address) {
 			throw new Error("Wallet not connected");
@@ -69,7 +68,7 @@ export const useSealSubscription = (packageId: string) => {
 				target: `${packageId}::subscription::seal_approve_channel_access`,
 				arguments: [
 					tx.pure.vector("u8", Array.from(new TextEncoder().encode(nouce))),
-          tx.pure.id(podcastId),
+					tx.pure.id(podcastId),
 					tx.object(subscriptionObjectId),
 					tx.object(channelId),
 				],
@@ -97,8 +96,8 @@ export const useSealSubscription = (packageId: string) => {
 	 */
 	const verifySubscriptionAccess = async (
 		subscriptionObjectId: string,
-    podcastId: string,
-    nouce: string,
+		podcastId: string,
+		nouce: string,
 		channelId: string,
 	): Promise<boolean> => {
 		if (!currentAccount?.address) {
@@ -112,7 +111,7 @@ export const useSealSubscription = (packageId: string) => {
 				target: `${packageId}::subscription::seal_approve_channel_access`,
 				arguments: [
 					tx.pure.vector("u8", Array.from(new TextEncoder().encode(nouce))),
-          tx.pure.id(podcastId),
+					tx.pure.id(podcastId),
 					tx.object(subscriptionObjectId),
 					tx.pure.id(channelId),
 				],

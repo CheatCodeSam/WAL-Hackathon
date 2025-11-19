@@ -244,7 +244,7 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 		<div className="min-h-screen bg-gray-50 p-8">
 			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
 				<div className="mb-6 flex items-center justify-between">
-					<Button variant="outline" asChild>
+					<Button asChild variant="outline">
 						<Link href={`/${podcast.owner}`}>
 							← Back to {podcast.owner}'s channel
 						</Link>
@@ -252,10 +252,10 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 
 					{(isOwner || isSubscribed) && (
 						<Button
-							variant="secondary"
-							onClick={handleDownload}
-							disabled={status === "downloading" || !ready}
 							className="ml-2 cursor-pointer"
+							disabled={status === "downloading" || !ready}
+							onClick={handleDownload}
+							variant="secondary"
 						>
 							{status === "downloading" ? "Downloading..." : "Download"}
 						</Button>
@@ -263,10 +263,10 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 
 					{isOwner && (
 						<Button
-							variant="destructive"
-							onClick={handleDelete}
 							disabled={status === "deleting"}
+							onClick={handleDelete}
 							type="button"
+							variant="destructive"
 						>
 							{status === "deleting" ? "Deleting..." : "Delete Podcast"}
 						</Button>
