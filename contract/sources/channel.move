@@ -251,6 +251,10 @@ public fun number_of_podcasts(channel: &Channel): u64 {
     return channel.published_podcasts.length()
 }
 
+public fun number_of_subscribers(channel: &Channel): u64 {
+    return channel.subscribers.length()
+}
+
 // === Package Functions ===
 
 public(package) fun authorize_address_for_channel(
