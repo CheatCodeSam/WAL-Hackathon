@@ -5,7 +5,7 @@ import {
 } from "@mysten/dapp-kit";
 import { Edit, MoreVertical, Upload } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -52,9 +52,6 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
 
-	const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
-	const [subscriptionWeeks, setSubscriptionWeeks] = useState(1);
-
 	const isOwner = account?.address === channel.owner;
 
 	const {
@@ -77,6 +74,10 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 		startUnsubscribing,
 		finishUnsubscribing,
 		failUnsubscribing,
+		isSubscriptionModalOpen,
+		setIsSubscriptionModalOpen,
+		subscriptionWeeks,
+		setSubscriptionWeeks,
 	} = useChannelPageStore();
 
 	const isSubscribedQuery = api.channel.isAddressSubscribedToChannel.useQuery(
@@ -431,7 +432,7 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 								max={channel.maxSubscriptionDurationInWeeks}
 								min={1}
 								onChange={(e) => {
-									const val = Number.parseInt(e.target.value);
+									const val = Number.parseInt(e.target.value, 10);
 									if (
 										val > 0 &&
 										val <= channel.maxSubscriptionDurationInWeeks

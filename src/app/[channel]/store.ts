@@ -22,6 +22,12 @@ export interface ChannelPageState {
 	canUnsubscribe: () => boolean;
 	isLoading: () => boolean;
 
+	isSubscriptionModalOpen: boolean;
+	subscriptionWeeks: number;
+
+	setIsSubscriptionModalOpen: (isOpen: boolean) => void;
+	setSubscriptionWeeks: (weeks: number) => void;
+
 	setIsOwner: (isOwner: boolean) => void;
 	setNoWallet: () => void;
 	startChecking: () => void;
@@ -45,6 +51,8 @@ export const useChannelPageStore = create<ChannelPageState>((set, get) => ({
 	action: "none",
 	error: null,
 	isOwner: false,
+	isSubscriptionModalOpen: false,
+	subscriptionWeeks: 1,
 
 	// Computed properties
 	canSubscribe: () => {
@@ -66,6 +74,16 @@ export const useChannelPageStore = create<ChannelPageState>((set, get) => ({
 	setIsOwner: (isOwner: boolean) =>
 		set({
 			isOwner,
+		}),
+
+	setIsSubscriptionModalOpen: (isOpen: boolean) =>
+		set({
+			isSubscriptionModalOpen: isOpen,
+		}),
+
+	setSubscriptionWeeks: (weeks: number) =>
+		set({
+			subscriptionWeeks: weeks,
 		}),
 
 	// Wallet status actions
