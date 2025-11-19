@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/a11y/useMediaCaption: <explanation> */
 "use client";
 
 import {
@@ -322,6 +323,7 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 								viewBox="0 0 24 24"
 								xmlns="http://www.w3.org/2000/svg"
 							>
+								<title>circle</title>
 								<circle cx="12" cy="12" r="10" />
 								<line x1="12" x2="12" y1="8" y2="12" />
 								<line x1="12" x2="12.01" y1="16" y2="16" />
@@ -443,6 +445,7 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 										stroke="currentColor"
 										viewBox="0 0 24 24"
 									>
+										<title>collapsed</title>
 										<path
 											d="M19 9l-7 7-7-7"
 											strokeLinecap="round"

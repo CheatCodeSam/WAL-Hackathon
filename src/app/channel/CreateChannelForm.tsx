@@ -35,6 +35,7 @@ export function CreateChannelForm() {
 			profilePicture: null as File | null,
 			coverPhoto: null as File | null,
 			subscriptionPrice: "",
+			maxSubscriptionDurationInWeeks: "",
 		},
 		onSubmit: async ({ value }) => {
 			if (!account?.address) return;
@@ -71,6 +72,17 @@ export function CreateChannelForm() {
 
 				const tx = new Transaction();
 
+				// Convert subscription price from SUI to Mist
+				const subscriptionPriceInMist = value.subscriptionPrice
+					? Math.floor(
+							Number.parseFloat(value.subscriptionPrice) * 1_000_000_000,
+						)
+					: 10000;
+
+				const maxDuration = value.maxSubscriptionDurationInWeeks
+					? Number.parseInt(value.maxSubscriptionDurationInWeeks, 10)
+					: 3;
+
 				tx.moveCall({
 					arguments: [
 						tx.object(fundsuiRegistryId),
@@ -79,8 +91,8 @@ export function CreateChannelForm() {
 						tx.pure.string(value.description),
 						tx.pure.string(coverPhotoUri || ""),
 						tx.pure.string(profilePictureUri || ""),
-						tx.pure.u64(10000),
-						tx.pure.u8(3),
+						tx.pure.u64(subscriptionPriceInMist),
+						tx.pure.u8(maxDuration),
 					],
 					target: `${fundsuiPackageId}::channel::new`,
 				});
@@ -282,14 +294,14 @@ export function CreateChannelForm() {
 								className="mb-2 block font-medium text-sm"
 								htmlFor={field.name}
 							>
-								Subscription Price
+								Subscription Price (SUI per week)
 							</label>
 							<div className="relative">
 								<span className="-translate-y-1/2 absolute top-1/2 left-4 text-gray-500">
-									$
+									SUI
 								</span>
 								<input
-									className="w-full rounded-md border border-gray-300 py-2 pr-4 pl-8 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+									className="w-full rounded-md border border-gray-300 py-2 pr-4 pl-12 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 									id={field.name}
 									min="0"
 									name={field.name}
@@ -301,6 +313,30 @@ export function CreateChannelForm() {
 									value={field.state.value}
 								/>
 							</div>
+						</div>
+					)}
+				</form.Field>
+
+				<form.Field name="maxSubscriptionDurationInWeeks">
+					{(field) => (
+						<div>
+							<label
+								className="mb-2 block font-medium text-sm"
+								htmlFor={field.name}
+							>
+								Max Subscription Duration (weeks)
+							</label>
+							<input
+								className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+								id={field.name}
+								min="1"
+								name={field.name}
+								onBlur={field.handleBlur}
+								onChange={(e) => field.handleChange(e.target.value)}
+								placeholder="52"
+								type="number"
+								value={field.state.value}
+							/>
 						</div>
 					)}
 				</form.Field>
