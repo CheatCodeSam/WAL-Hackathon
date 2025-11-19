@@ -6,12 +6,16 @@ import {
 	useSuiClient,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { fromBase64 } from "@mysten/sui/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
+import { useSeal } from "~/app/SealProvider";
 import { Button } from "~/components/ui/button";
+import { env } from "~/env";
 import type { PodcastView } from "~/services/backend/podcast/lookupPodcast";
+import { api } from "~/trpc/react";
 import { usePodcastPageStore } from "./store";
 
 export interface PodcastPageViewProps {
@@ -27,16 +31,38 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 	const fundsuiRegistryId = useNetworkVariable("fundsuiChannelRegistry");
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
+	const { decrypt, ready, client, sessionKey, initializeSession } = useSeal();
 
 	const {
 		status,
 		error,
 		isOwner,
+		isSubscribed,
 		setIsOwner,
+		setIsSubscribed,
 		startDeleting,
 		finishDeleting,
 		failDeleting,
+		startDownloading,
+		finishDownloading,
 	} = usePodcastPageStore();
+
+	const isSubscribedQuery = api.channel.isAddressSubscribedToChannel.useQuery(
+		{
+			channelId: podcast.channel_id,
+			userAddress: account?.address ?? "",
+		},
+		{ enabled: !!account?.address },
+	);
+
+	useEffect(() => {
+		if (isSubscribedQuery.data) {
+			setIsSubscribed(
+				isSubscribedQuery.data.hasSubscription &&
+					isSubscribedQuery.data.isActive,
+			);
+		}
+	}, [isSubscribedQuery.data, setIsSubscribed]);
 
 	// Check if current account is the owner of the channel
 	useEffect(() => {
@@ -105,6 +131,114 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 		}
 	};
 
+	const handleDownload = async () => {
+		if (!ready || !client) {
+			console.error("Seal client not initialized");
+			return;
+		}
+
+		if (!account?.address) {
+			console.error("Wallet not connected");
+			return;
+		}
+
+		startDownloading();
+
+		let activeSession = sessionKey;
+
+		try {
+			// Ensure session is initialized
+			if (!activeSession) {
+				console.log("Initializing session...");
+				try {
+					activeSession = await initializeSession(fundsuiPackageId);
+				} catch (e) {
+					console.error("Failed to initialize session:", e);
+					finishDownloading();
+					return;
+				}
+			}
+
+			// 1. Fetch encrypted audio from Walrus
+			const walrusUrl = `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${podcast.source_file_uri}`;
+			const response = await fetch(walrusUrl);
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch encrypted audio: ${response.status}`);
+			}
+
+			const encryptedData = fromBase64(await response.text());
+
+			// 2. Create transaction for decryption authorization
+			const tx = new Transaction();
+			tx.setSender(account.address);
+
+			if (isOwner) {
+				tx.moveCall({
+					target: `${fundsuiPackageId}::seal_policy::seal_approve_creator`,
+					arguments: [
+						tx.pure.vector("u8", podcast.nonce as unknown as number[]),
+						tx.object(podcast.channel_id),
+						tx.object(podcast.id),
+					],
+				});
+			} else {
+				tx.moveCall({
+					target: `${fundsuiPackageId}::seal_policy::seal_approve_subscription`,
+					arguments: [
+						tx.pure.vector("u8", podcast.nonce as unknown as number[]),
+						tx.object(podcast.channel_id),
+						tx.object(podcast.id),
+					],
+				});
+			}
+
+			console.log("authorized");
+
+			// 3. Build transaction bytes (without executing)
+			const txBytes = await tx.build({
+				client: suiClient,
+				onlyTransactionKind: true,
+			});
+
+			// 4. Decrypt the audio
+			// We use client.decrypt directly to ensure we use the latest session key
+			// even if it was just initialized in this function
+
+			if (!activeSession) {
+				throw new Error("Session key is missing");
+			}
+
+			const decryptedAudio = await client.decrypt({
+				data: encryptedData,
+				sessionKey: activeSession,
+				txBytes,
+				checkLEEncoding: false,
+				checkShareConsistency: false,
+			});
+
+			// 5. Create download link
+			const fileType = podcast.file_type || "audio/mp3";
+			const extension = fileType.split("/")[1] || "mp3";
+			const blob = new Blob([decryptedAudio as unknown as BlobPart], {
+				type: fileType,
+			});
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${podcast.title}.${extension}`;
+			document.body.appendChild(a);
+			a.click();
+			window.URL.revokeObjectURL(url);
+			document.body.removeChild(a);
+		} catch (error) {
+			console.error("Download failed:", error);
+			alert("Failed to download podcast. Please try again.");
+		} finally {
+			finishDownloading();
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50 p-8">
 			<div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
@@ -114,6 +248,17 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 							← Back to {podcast.owner}'s channel
 						</Link>
 					</Button>
+
+					{(isOwner || isSubscribed) && (
+						<Button
+							variant="secondary"
+							onClick={handleDownload}
+							disabled={status === "downloading" || !ready}
+							className="ml-2 cursor-pointer"
+						>
+							{status === "downloading" ? "Downloading..." : "Download"}
+						</Button>
+					)}
 
 					{isOwner && (
 						<Button

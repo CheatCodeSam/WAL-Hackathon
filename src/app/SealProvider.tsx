@@ -10,7 +10,11 @@ import React, {
 } from "react";
 import { SealClient, SessionKey, EncryptedObject } from "@mysten/seal";
 import { SuiClient } from "@mysten/sui/client";
-import { useCurrentAccount, useSignPersonalMessage, useSignTransaction } from "@mysten/dapp-kit";
+import {
+	useCurrentAccount,
+	useSignPersonalMessage,
+	useSignTransaction,
+} from "@mysten/dapp-kit";
 
 // Types
 export type KeyServer = {
@@ -41,9 +45,15 @@ type SealContextValue = {
 		plaintext: Uint8Array | string,
 		opts?: EncryptOptions,
 	) => Promise<{ encryptedObject: Uint8Array; key: Uint8Array }>;
-	decrypt: (ciphertext: Uint8Array, opts: DecryptOptions) => Promise<Uint8Array>;
+	decrypt: (
+		ciphertext: Uint8Array,
+		opts: DecryptOptions,
+	) => Promise<Uint8Array>;
 	verifyKeyServers: (keyServers: KeyServer[]) => Promise<boolean>;
-	initializeSession: (packageId: string, ttlMin?: number) => Promise<void>;
+	initializeSession: (
+		packageId: string,
+		ttlMin?: number,
+	) => Promise<SessionKey>;
 };
 
 const SealContext = createContext<SealContextValue | undefined>(undefined);
@@ -153,6 +163,18 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 		}
 	}, [autoInitSession, ready, client, currentAccount?.address, sessionKey]);
 
+	// Reset session when account changes
+	useEffect(() => {
+		if (
+			sessionKey &&
+			currentAccount?.address &&
+			sessionKey.getAddress() !== currentAccount.address
+		) {
+			console.log("Account changed, resetting session key");
+			setSessionKey(undefined);
+		}
+	}, [currentAccount?.address, sessionKey]);
+
 	// Initialize session key
 	const initializeSession = async (
 		targetPackageId: string,
@@ -178,10 +200,9 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 			session.setPersonalMessageSignature(signature);
 			setSessionKey(session);
 
-			console.log(
-				"Session initialized. User needs to sign message:",
-				message,
-			);
+			console.log("Session initialized. User needs to sign message:", message);
+
+			return session;
 		} catch (e) {
 			console.error("Failed to initialize session:", e);
 			throw e;
@@ -205,9 +226,7 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 
 			return await client.encrypt({
 				threshold,
-				packageId: packageId.startsWith("0x")
-					? packageId
-					: `0x${packageId}`,
+				packageId: packageId.startsWith("0x") ? packageId : `0x${packageId}`,
 				id: identity,
 				data: pt,
 			});
@@ -223,16 +242,16 @@ export const SuiSealProvider: React.FC<SuiSealProviderProps> = ({
 			if (!client) throw new Error("Seal SDK not initialized");
 			if (!sessionKey) throw new Error("Session key not initialized");
 
-			const data =  await client.decrypt({
+			const data = await client.decrypt({
 				data: ciphertext,
 				sessionKey,
 				txBytes: opts.txBytes,
 
 				checkLEEncoding: false,
-        checkShareConsistency: false
+				checkShareConsistency: false,
 			});
 
-			return data
+			return data;
 		};
 	}, [client, sessionKey]);
 

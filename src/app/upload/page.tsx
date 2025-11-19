@@ -6,6 +6,7 @@ import {
 	useSuiClient,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { fromHex } from "@mysten/sui/utils";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -144,6 +145,8 @@ export default function Upload() {
 
 				updateProgress("Creating podcast on blockchain...");
 
+				const sealKeyIdBytes = fromHex(audioUploadResult.nonce);
+
 				const tx = new Transaction();
 
 				const id_value = tx.moveCall({
@@ -151,7 +154,7 @@ export default function Upload() {
 						tx.object(value.channel),
 						tx.object(fundsuiRegistryId),
 						tx.pure.string(value.title),
-						tx.pure.string(audioUploadResult.nonce),
+						tx.pure.vector("u8", sealKeyIdBytes),
 						tx.pure.string(value.description),
 						tx.pure.string(audioUploadResult.blobId),
 					],
