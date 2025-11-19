@@ -7,9 +7,10 @@ import {
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { fromBase64 } from "@mysten/sui/utils";
+import { FastForward, Pause, Play, Rewind, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNetworkVariable } from "~/app/networkConfig";
 import { useSeal } from "~/app/SealProvider";
 import { Button } from "~/components/ui/button";
@@ -32,6 +33,10 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 	const suiClient = useSuiClient();
 	const { mutateAsync } = useSignAndExecuteTransaction();
 	const { decrypt, ready, client, sessionKey, initializeSession } = useSeal();
+
+	const audioRef = useRef<HTMLAudioElement>(null);
+	const [isPlaying, setIsPlaying] = useState(false);
+	const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
 	const {
 		status,
@@ -131,7 +136,31 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 		}
 	};
 
-	const handleDownload = async () => {
+	// Clean up object URL when component unmounts or audioUrl changes
+	useEffect(() => {
+		return () => {
+			if (audioUrl) {
+				URL.revokeObjectURL(audioUrl);
+			}
+		};
+	}, [audioUrl]);
+
+	const handlePlayPause = async () => {
+		if (!audioRef.current) return;
+
+		if (isPlaying) {
+			audioRef.current.pause();
+		} else {
+			// If we don't have the audio URL yet, we need to download and decrypt
+			if (!audioUrl) {
+				await handleDecryptAndPlay();
+			} else {
+				await audioRef.current.play();
+			}
+		}
+	};
+
+	const handleDecryptAndPlay = async () => {
 		if (!ready || !client) {
 			console.error("Seal client not initialized");
 			return;
@@ -203,9 +232,6 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 			});
 
 			// 4. Decrypt the audio
-			// We use client.decrypt directly to ensure we use the latest session key
-			// even if it was just initialized in this function
-
 			if (!activeSession) {
 				throw new Error("Session key is missing");
 			}
@@ -218,25 +244,40 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 				checkShareConsistency: false,
 			});
 
-			// 5. Create download link
+			// 5. Create Blob URL
 			const fileType = podcast.file_type || "audio/mp3";
-			const extension = fileType.split("/")[1] || "mp3";
 			const blob = new Blob([decryptedAudio as unknown as BlobPart], {
 				type: fileType,
 			});
 			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = `${podcast.title}.${extension}`;
-			document.body.appendChild(a);
-			a.click();
-			window.URL.revokeObjectURL(url);
-			document.body.removeChild(a);
+			setAudioUrl(url);
+
+			// Auto play
+			setTimeout(() => {
+				if (audioRef.current) {
+					audioRef.current.play();
+				}
+			}, 100);
 		} catch (error) {
-			console.error("Download failed:", error);
-			alert("Failed to download podcast. Please try again.");
+			console.error("Decrypt failed:", error);
+			alert("Failed to play podcast. Please try again.");
 		} finally {
 			finishDownloading();
+		}
+	};
+
+	const handleSeek = (seconds: number) => {
+		if (audioRef.current) {
+			audioRef.current.currentTime = Math.min(
+				Math.max(audioRef.current.currentTime + seconds, 0),
+				audioRef.current.duration,
+			);
+		}
+	};
+
+	const handleRestart = () => {
+		if (audioRef.current) {
+			audioRef.current.currentTime = 0;
 		}
 	};
 
@@ -295,32 +336,55 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 				<div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
 					{/* Banner / Visual Area */}
 					<div className="relative h-48 w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-						<div className="absolute inset-0 flex items-center justify-center bg-black/10">
+						<div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/10">
 							{/* Play Button (Central) */}
 							{isOwner || isSubscribed ? (
-								<button
-									className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
-									disabled={status === "downloading" || !ready}
-									onClick={handleDownload}
-									type="button"
-								>
-									{status === "downloading" ? (
-										<div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-									) : (
-										<svg
-											className="ml-1 h-10 w-10 text-indigo-600"
-											fill="currentColor"
-											viewBox="0 0 24 24"
-											xmlns="http://www.w3.org/2000/svg"
-										>
-											<path
-												clipRule="evenodd"
-												d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
-												fillRule="evenodd"
-											/>
-										</svg>
+								<div className="flex items-center gap-4">
+									<button
+										className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+										disabled={status === "downloading" || !ready}
+										onClick={handlePlayPause}
+										type="button"
+									>
+										{status === "downloading" ? (
+											<div className="h-6 w-6 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+										) : isPlaying ? (
+											<Pause className="h-6 w-6 fill-current text-indigo-600" />
+										) : (
+											<Play className="ml-1 h-6 w-6 fill-current text-indigo-600" />
+										)}
+									</button>
+
+									{/* Controls - Visible when audio URL is present */}
+									{audioUrl && (
+										<div className="flex items-center gap-3">
+											<button
+												className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:scale-95"
+												onClick={() => handleSeek(-15)}
+												title="-15 seconds"
+												type="button"
+											>
+												<Rewind className="h-5 w-5 fill-current" />
+											</button>
+											<button
+												className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:scale-95"
+												onClick={() => handleSeek(15)}
+												title="+15 seconds"
+												type="button"
+											>
+												<FastForward className="h-5 w-5 fill-current" />
+											</button>
+											<button
+												className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:scale-95"
+												onClick={handleRestart}
+												title="Restart"
+												type="button"
+											>
+												<RotateCcw className="h-4 w-4" />
+											</button>
+										</div>
 									)}
-								</button>
+								</div>
 							) : (
 								<div className="flex flex-col items-center gap-2 rounded-lg bg-black/40 px-6 py-3 text-white backdrop-blur-sm">
 									<span className="font-medium">Subscribe to Listen</span>
@@ -328,6 +392,16 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 							)}
 						</div>
 					</div>
+
+					{/* Hidden Audio Element */}
+					<audio
+						onEnded={() => setIsPlaying(false)}
+						onError={(e) => console.error("Audio error:", e)}
+						onPause={() => setIsPlaying(false)}
+						onPlay={() => setIsPlaying(true)}
+						ref={audioRef}
+						src={audioUrl ?? undefined}
+					/>
 
 					{/* Content */}
 					<div className="p-8">
