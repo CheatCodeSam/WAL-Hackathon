@@ -5,16 +5,26 @@ import {
 } from "@mysten/dapp-kit";
 import { Edit, MoreVertical, Upload } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "~/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { env } from "~/env";
 import type {
@@ -41,6 +51,9 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const fundsuiPackageId = useNetworkVariable("fundsuiPackageId");
 	const hostingClientAddress = useNetworkVariable("hostingClientAddress");
 	const { mutateAsync } = useSignAndExecuteTransaction();
+
+	const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+	const [subscriptionWeeks, setSubscriptionWeeks] = useState(1);
 
 	const isOwner = account?.address === channel.owner;
 
@@ -117,12 +130,20 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 	const handleSubscribe = async () => {
 		if (!canSubscribe() || !account?.address) return;
 
+		setIsSubscriptionModalOpen(true);
+	};
+
+	const confirmSubscription = async () => {
+		setIsSubscriptionModalOpen(false);
 		startSubscribing();
+		const totalCost = subscriptionWeeks * channel.subscriptionPriceInMist;
+
 		const result = await subscribeToChannel(
 			channel.channelId,
 			hostingClientAddress,
 			fundsuiPackageId,
 			mutateAsync,
+			totalCost,
 		);
 		if (result.isErr()) failSubscribing(result.error.msg);
 		else finishSubscribing();
@@ -358,7 +379,9 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 											Subscription Price
 										</span>
 										<p className="font-medium text-gray-900">
-											{channel.subscriptionPriceInMist} MIST
+											{status === "not_subscribed"
+												? `${(Number(channel.subscriptionPriceInMist) / 1_000_000_000).toFixed(4)} SUI`
+												: `${channel.subscriptionPriceInMist} MIST`}
 										</p>
 									</div>
 
@@ -376,6 +399,62 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 					</TabsContent>
 				</Tabs>
 			</div>
+			<Dialog
+				onOpenChange={setIsSubscriptionModalOpen}
+				open={isSubscriptionModalOpen}
+			>
+				<DialogContent className="sm:max-w-[425px]">
+					<DialogHeader>
+						<DialogTitle>Subscribe to {channel.displayName}</DialogTitle>
+						<DialogDescription>
+							Choose how many weeks you want to subscribe for. (Max:{" "}
+							{channel.maxSubscriptionDurationInWeeks} weeks)
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-4 py-4">
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label className="text-right" htmlFor="weeks">
+								Weeks
+							</Label>
+							<Input
+								className="col-span-3"
+								id="weeks"
+								max={channel.maxSubscriptionDurationInWeeks}
+								min={1}
+								onChange={(e) => {
+									const val = Number.parseInt(e.target.value);
+									if (
+										val > 0 &&
+										val <= channel.maxSubscriptionDurationInWeeks
+									) {
+										setSubscriptionWeeks(val);
+									}
+								}}
+								type="number"
+								value={subscriptionWeeks}
+							/>
+						</div>
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label className="text-right">Total Cost</Label>
+							<div className="col-span-3 font-medium">
+								{subscriptionWeeks * channel.subscriptionPriceInMist} MIST
+							</div>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							onClick={() => setIsSubscriptionModalOpen(false)}
+							type="button"
+							variant="secondary"
+						>
+							Cancel
+						</Button>
+						<Button onClick={confirmSubscription} type="button">
+							Confirm Subscription
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

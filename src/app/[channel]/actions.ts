@@ -32,9 +32,10 @@ export async function subscribeToChannel(
 	fundsuiPackageId: string,
 	// biome-ignore lint/suspicious/noExplicitAny: type is too complicated.
 	mutateAsync: any,
+	amountInMist: number,
 ): Promise<Result<void, ChannelSubscribeError>> {
 	const tx = new Transaction();
-	const [paymentCoin] = tx.splitCoins(tx.gas, [10000 * 2]);
+	const [paymentCoin] = tx.splitCoins(tx.gas, [amountInMist]);
 
 	tx.moveCall({
 		arguments: [
