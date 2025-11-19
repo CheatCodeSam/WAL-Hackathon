@@ -189,6 +189,7 @@ export function PodcastPageView(props: PodcastPageViewProps) {
 						tx.pure.vector("u8", podcast.nonce as unknown as number[]),
 						tx.object(podcast.channel_id),
 						tx.object(podcast.id),
+						tx.object.clock(),
 					],
 				});
 			}

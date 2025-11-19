@@ -1,6 +1,7 @@
 module fundsui::channel;
 
 use std::string::String;
+use sui::clock::Clock;
 use sui::coin::{Self, Coin};
 use sui::dynamic_field as df;
 use sui::object_table;
@@ -146,6 +147,7 @@ public fun subscribe(
     channel: &mut Channel,
     frontend_address: address,
     mut payment: Coin<SUI>,
+    clock: &Clock,
     ctx: &mut TxContext,
 ): ID {
     let sender = ctx.sender();
@@ -164,6 +166,8 @@ public fun subscribe(
     let subscription_id: ID;
     let has_subscription = channel.subscribers.contains(sender);
 
+    let now = clock.timestamp_ms();
+
     if (!has_subscription) {
         // New subscription
         let max_duration_ms =
@@ -173,8 +177,8 @@ public fun subscribe(
         let subscription = Subscription {
             id: object::new(ctx),
             channel_id: object::id(channel),
-            start_timestamp: ctx.epoch_timestamp_ms(),
-            end_timestamp: ctx.epoch_timestamp_ms() + duration_ms,
+            start_timestamp: now,
+            end_timestamp: now + duration_ms,
         };
         subscription_id = object::id(&subscription);
         channel.subscribers.add(sender, subscription);
@@ -183,19 +187,16 @@ public fun subscribe(
         let subscription = channel.subscribers.borrow(sender);
 
         // If they still have a valid subscription, use that as the time to append to, otherwise, use now.
-        let base_time = if (subscription.end_timestamp > ctx.epoch_timestamp_ms()) {
+        let base_time = if (subscription.end_timestamp > now) {
             subscription.end_timestamp
         } else {
-            ctx.epoch_timestamp_ms()
+            now
         };
 
         let new_end_timestamp = base_time + duration_ms;
         let max_duration_ms =
             (channel.get_max_subscription_duration_in_weeks() as u64) * MS_PER_WEEK;
-        assert!(
-            new_end_timestamp - ctx.epoch_timestamp_ms() <= max_duration_ms,
-            EPurchasingTooMuchTime,
-        );
+        assert!(new_end_timestamp - now <= max_duration_ms, EPurchasingTooMuchTime);
 
         subscription_id = object::id(subscription);
 
@@ -206,10 +207,10 @@ public fun subscribe(
     subscription_id
 }
 
-public fun delete_expired_subscription(channel: &mut Channel, ctx: &mut TxContext) {
+public fun delete_expired_subscription(channel: &mut Channel, clock: &Clock, ctx: &mut TxContext) {
     let sender = ctx.sender();
     let subscription = channel.subscribers.remove(sender);
-    assert!(ctx.epoch_timestamp_ms() > subscription.end_timestamp, ESubscriptionStillActive);
+    assert!(clock.timestamp_ms() > subscription.end_timestamp, ESubscriptionStillActive);
     let Subscription { id, channel_id: _, start_timestamp: _, end_timestamp: _ } = subscription;
     object::delete(id);
 }
@@ -241,9 +242,9 @@ public fun is_address_subscribed(channel: &mut Channel, addr: address): bool {
     channel.subscribers.contains(addr)
 }
 
-public fun is_address_subscription_active(channel: &Channel, addr: address, ctx: &TxContext): bool {
+public fun is_address_subscription_active(channel: &Channel, addr: address, clock: &Clock): bool {
     let subscription = channel.subscribers.borrow(addr);
-    subscription.end_timestamp > ctx.epoch_timestamp_ms()
+    subscription.end_timestamp > clock.timestamp_ms()
 }
 
 // === Package Functions ===

@@ -1,3 +1,4 @@
+import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { channelRouter } from "./routers/channel";
 

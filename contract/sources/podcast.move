@@ -8,6 +8,7 @@ use fundsui::channel::{
     remove_podcast_from_channel
 };
 use std::string::String;
+use sui::clock::Clock;
 
 #[error]
 const EUnauthorizedAccess: vector<u8> = b"Unauthorized Access";
@@ -29,6 +30,7 @@ public fun new(
     nonce: vector<u8>,
     description: String,
     source_file_uri: String,
+    clock: &Clock,
     ctx: &mut TxContext,
 ): ID {
     let sender = ctx.sender();
@@ -41,7 +43,7 @@ public fun new(
         title,
         channel_id: object::id(channel),
         description,
-        created_at: ctx.epoch_timestamp_ms(),
+        created_at: clock.timestamp_ms(),
     };
 
     let podcast_id = object::id(&podcast);

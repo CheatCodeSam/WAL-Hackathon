@@ -12,7 +12,7 @@ export async function deleteSubscriptionToChannel(
 	const tx = new Transaction();
 
 	tx.moveCall({
-		arguments: [tx.object(channelId)],
+		arguments: [tx.object(channelId), tx.object.clock()],
 		target: `${fundsuiPackageId}::channel::delete_expired_subscription`,
 	});
 
@@ -41,6 +41,7 @@ export async function subscribeToChannel(
 			tx.object(channelId),
 			tx.pure.address(frontendAddress),
 			paymentCoin,
+			tx.object.clock(),
 		],
 		target: `${fundsuiPackageId}::channel::subscribe`,
 	});

@@ -33,7 +33,11 @@ export async function isSubscriptionActive(
 ): Promise<boolean> {
 	const tx = new Transaction();
 	tx.moveCall({
-		arguments: [tx.object(channelId), tx.pure.address(userAddress)],
+		arguments: [
+			tx.object(channelId),
+			tx.pure.address(userAddress),
+			tx.object.clock(),
+		],
 		target: `${env.NEXT_PUBLIC_CONTRACT_ADDRESS}::channel::is_address_subscription_active`,
 	});
 

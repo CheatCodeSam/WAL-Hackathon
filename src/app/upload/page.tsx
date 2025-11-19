@@ -158,6 +158,7 @@ export default function Upload() {
 						tx.pure.vector("u8", sealKeyIdBytes),
 						tx.pure.string(value.description),
 						tx.pure.string(audioUploadResult.blobId),
+						tx.object.clock(),
 					],
 					target: `${fundsuiPackageId}::podcast::new`,
 				});
