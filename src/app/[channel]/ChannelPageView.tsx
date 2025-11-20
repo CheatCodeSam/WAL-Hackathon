@@ -403,6 +403,15 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 											{channel.numberOfPodcasts}
 										</p>
 									</div>
+
+									<div>
+										<span className="block text-gray-500 text-sm">
+											Subscribers
+										</span>
+										<p className="font-medium text-gray-900">
+											{channel.numberOfSubscribers}
+										</p>
+									</div>
 								</div>
 							</CardContent>
 						</Card>

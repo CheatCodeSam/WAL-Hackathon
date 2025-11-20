@@ -12,6 +12,11 @@ export interface ExplorePageViewProps {
 export default function ExplorePageView(props: ExplorePageViewProps) {
 	const { channels } = props;
 
+	// Sort channels by number of subscribers in descending order
+	const sortedChannels = [...channels].sort(
+		(a, b) => b.numberOfSubscribers - a.numberOfSubscribers,
+	);
+
 	return (
 		<div className="min-h-screen bg-gray-50 p-8">
 			<div className="mx-auto max-w-4xl">
@@ -33,7 +38,7 @@ export default function ExplorePageView(props: ExplorePageViewProps) {
 					</div>
 				) : (
 					<div className="space-y-4">
-						{channels.map((channel) => {
+						{sortedChannels.map((channel) => {
 							const profileUrl = channel.profilePhotoUri
 								? `${env.NEXT_PUBLIC_WALRUS_AGGREGATOR}/v1/blobs/${channel.profilePhotoUri}`
 								: undefined;
@@ -92,6 +97,12 @@ export default function ExplorePageView(props: ExplorePageViewProps) {
 													<span className="text-gray-500">Podcasts: </span>
 													<span className="text-gray-700">
 														{channel.numberOfPodcasts}
+													</span>
+												</div>
+												<div>
+													<span className="text-gray-500">Subscribers: </span>
+													<span className="text-gray-700">
+														{channel.numberOfSubscribers}
 													</span>
 												</div>
 											</div>

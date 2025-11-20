@@ -29,6 +29,7 @@ export interface ChannelViewInterface {
 	podcastsTable: string;
 	subscribersTable: string;
 	numberOfPodcasts: number;
+	numberOfSubscribers: number;
 }
 
 export type LookUpChannelError =
@@ -97,6 +98,7 @@ export async function getChannelForAddress(
 					podcastsTable: fields.published_podcasts.fields.id.id,
 					subscribersTable: fields.subscribers.fields.id.id,
 					numberOfPodcasts: Number(fields.published_podcasts.fields.size),
+					numberOfSubscribers: Number(fields.subscribers.fields.size),
 				};
 
 				return ok(channelView);
