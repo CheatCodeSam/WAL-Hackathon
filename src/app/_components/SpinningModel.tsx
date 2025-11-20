@@ -17,7 +17,7 @@ function Model(props: React.ComponentProps<"group">) {
 
 	return (
 		<group ref={ref} {...props} dispose={null}>
-			<primitive object={scene} scale={[3, 3, 3]} />
+			<primitive object={scene} scale={[5, 5, 5]} />
 		</group>
 	);
 }
