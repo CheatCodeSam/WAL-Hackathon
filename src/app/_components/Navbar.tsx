@@ -1,9 +1,9 @@
 "use client";
 import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { BsCast } from "react-icons/bs";
 import { MdClose, MdDashboard, MdMenu, MdVideoLibrary } from "react-icons/md";
 import { RiCompassDiscoverLine } from "react-icons/ri";
 
@@ -36,7 +36,13 @@ const Navbar = () => {
 						className="flex items-center gap-2 font-bold text-blue-600 text-xl"
 						href="/"
 					>
-						<BsCast className="text-2xl" />
+						<Image
+							alt="FundSui Logo"
+							className="object-contain"
+							height={40}
+							src="/beaverlogo.png"
+							width={40}
+						/>
 						<span>FundSui</span>
 					</Link>
 

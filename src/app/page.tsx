@@ -1,6 +1,7 @@
 import { HydrateClient } from "~/trpc/server";
 import SpinningModel from "./_components/SpinningModel";
 import { Button } from "~/components/ui/button";
+import Image from "next/image";
 import Link from "next/link";
 
 export default async function Home() {
@@ -19,9 +20,18 @@ export default async function Home() {
 
 				{/* Section 2: Description */}
 				<section className="flex flex-col items-center justify-center w-full py-24 bg-gray-50">
-					<h2 className="text-4xl md:text-6xl font-black text-gray-900 text-center mb-4">
-						Fundsui
-					</h2>
+					<div className="flex items-center gap-4 mb-4">
+						<Image
+							alt="FundSui Logo"
+							className="object-contain"
+							height={64}
+							src="/beaverlogo.png"
+							width={64}
+						/>
+						<h2 className="text-4xl md:text-6xl font-black text-gray-900 text-center">
+							Fundsui
+						</h2>
+					</div>
 					<p className="text-xl md:text-2xl text-gray-600 text-center max-w-2xl px-4 mb-10">
 						a creator-subscription platform
 					</p>
