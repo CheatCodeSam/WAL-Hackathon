@@ -1,22 +1,16 @@
 "use client";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BsCast } from "react-icons/bs";
-import {
-	MdCardMembership,
-	MdClose,
-	MdDashboard,
-	MdLock,
-	MdMenu,
-	MdPlayArrow,
-} from "react-icons/md";
+import { MdClose, MdDashboard, MdMenu, MdVideoLibrary } from "react-icons/md";
 import { RiCompassDiscoverLine } from "react-icons/ri";
 
 const Navbar = () => {
 	const pathname = usePathname();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const account = useCurrentAccount();
 
 	const isActive = (path: string) => {
 		return pathname === path;
@@ -54,30 +48,25 @@ const Navbar = () => {
 								<span>Explore</span>
 							</Link>
 						</li>
-						<li>
-							<Link className={navLinkClass("/creator")} href="/creator">
-								<MdDashboard className="text-xl" />
-								<span>Dashboard</span>
-							</Link>
-						</li>
-						<li>
-							<Link className={navLinkClass("/subscribe")} href="/subscribe">
-								<MdCardMembership className="text-xl" />
-								<span>Subscribe</span>
-							</Link>
-						</li>
-						<li>
-							<Link className={navLinkClass("/play")} href="/play">
-								<MdPlayArrow className="text-xl" />
-								<span>Play</span>
-							</Link>
-						</li>
-						<li>
-							<Link className={navLinkClass("/decrypt")} href="/decrypt">
-								<MdLock className="text-xl" />
-								<span>Decrypt</span>
-							</Link>
-						</li>
+						{account && (
+							<>
+								<li>
+									<Link
+										className={navLinkClass("/dashboard")}
+										href="/dashboard"
+									>
+										<MdDashboard className="text-xl" />
+										<span>Dashboard</span>
+									</Link>
+								</li>
+								<li>
+									<Link className={navLinkClass("/channel")} href="/channel">
+										<MdVideoLibrary className="text-xl" />
+										<span>Channel</span>
+									</Link>
+								</li>
+							</>
+						)}
 					</ul>
 
 					{/* Right Side Actions - Desktop */}
@@ -108,54 +97,38 @@ const Navbar = () => {
 						<ul className="flex flex-col gap-2">
 							<li>
 								<Link
-									className={navLinkClass("/browse")}
-									href="/browse"
+									className={navLinkClass("/explore")}
+									href="/explore"
 									onClick={closeMobileMenu}
 								>
 									<RiCompassDiscoverLine className="text-xl" />
 									<span>Explore</span>
 								</Link>
 							</li>
-							<li>
-								<Link
-									className={navLinkClass("/creator")}
-									href="/creator"
-									onClick={closeMobileMenu}
-								>
-									<MdDashboard className="text-xl" />
-									<span>Dashboard</span>
-								</Link>
-							</li>
-							<li>
-								<Link
-									className={navLinkClass("/subscribe")}
-									href="/subscribe"
-									onClick={closeMobileMenu}
-								>
-									<MdCardMembership className="text-xl" />
-									<span>Subscribe</span>
-								</Link>
-							</li>
-							<li>
-								<Link
-									className={navLinkClass("/play")}
-									href="/play"
-									onClick={closeMobileMenu}
-								>
-									<MdPlayArrow className="text-xl" />
-									<span>Play</span>
-								</Link>
-							</li>
-							<li>
-								<Link
-									className={navLinkClass("/decrypt")}
-									href="/decrypt"
-									onClick={closeMobileMenu}
-								>
-									<MdLock className="text-xl" />
-									<span>Decrypt</span>
-								</Link>
-							</li>
+							{account && (
+								<>
+									<li>
+										<Link
+											className={navLinkClass("/dashboard")}
+											href="/dashboard"
+											onClick={closeMobileMenu}
+										>
+											<MdDashboard className="text-xl" />
+											<span>Dashboard</span>
+										</Link>
+									</li>
+									<li>
+										<Link
+											className={navLinkClass("/channel")}
+											href="/channel"
+											onClick={closeMobileMenu}
+										>
+											<MdVideoLibrary className="text-xl" />
+											<span>Channel</span>
+										</Link>
+									</li>
+								</>
+							)}
 						</ul>
 
 						{/* Mobile Connect Button */}
