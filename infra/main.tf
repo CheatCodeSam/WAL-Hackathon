@@ -56,6 +56,30 @@ resource "aws_ecs_task_definition" "fundsui_task" {
         {
           name  = "PORT"
           value = "3000"
+        },
+        {
+          name  = "NEXT_PUBLIC_CONTRACT_ADDRESS"
+          value = "0x91cfb6a33730c817eda234a02ebd11c24da160256b175f7c52e7bb262769322e"
+        },
+        {
+          name  = "NEXT_PUBLIC_CHANNEL_REGISTRY"
+          value = "0x55c4d429477babbf3e479b1a9db24ffb2002329da2c8c2f3933874b4ec8ff0e1"
+        },
+        {
+          name  = "NEXT_PUBLIC_CLIENT_ADDRESS"
+          value = "0x3041f60eafdb5351651dab5145c977e8e44b86eced6355eae2fd88af39ad6fbe"
+        },
+        {
+          name  = "NEXT_PUBLIC_WALRUS_PUBLISHER"
+          value = "http://walrus-publisher-testnet.cetus.zone:9001"
+        },
+        {
+          name  = "NEXT_PUBLIC_SUI_GRAPHQL_URL"
+          value = "https://graphql.testnet.sui.io/graphql"
+        },
+        {
+          name  = "NEXT_PUBLIC_WALRUS_AGGREGATOR"
+          value = "https://aggregator.walrus-testnet.walrus.space"
         }
       ]
       secrets = [
