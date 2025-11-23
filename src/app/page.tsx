@@ -1,10 +1,12 @@
-import { HydrateClient } from "~/trpc/server";
-import SpinningModel from "./_components/SpinningModel";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { Lock, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Lock, Shield } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { HydrateClient } from "~/trpc/server";
+import SpinningModel from "./_components/SpinningModel";
+
+export const revalidate = 60;
 
 export default async function Home() {
 	return (
