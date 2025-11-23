@@ -73,12 +73,12 @@ export default function ExplorePageView(props: ExplorePageViewProps) {
 												)}
 											</div>
 
-											<p className="text-gray-600 text-sm">
+											<p className="line-clamp-2 break-words text-gray-600 text-sm">
 												{channel.description}
 											</p>
 
-											<div className="flex items-center gap-6 border-gray-200 border-t pt-3 text-sm">
-												<div>
+											<div className="flex flex-wrap items-center gap-3 border-gray-200 border-t pt-3 text-sm sm:gap-6">
+												<div className="whitespace-nowrap">
 													<span className="text-gray-500">Subscription: </span>
 													<span className="font-semibold text-gray-900">
 														{(
@@ -87,19 +87,19 @@ export default function ExplorePageView(props: ExplorePageViewProps) {
 														SUI
 													</span>
 												</div>
-												<div>
+												<div className="whitespace-nowrap">
 													<span className="text-gray-500">Duration: </span>
 													<span className="text-gray-700">
 														{channel.maxSubscriptionDurationInWeeks} weeks
 													</span>
 												</div>
-												<div>
+												<div className="whitespace-nowrap">
 													<span className="text-gray-500">Podcasts: </span>
 													<span className="text-gray-700">
 														{channel.numberOfPodcasts}
 													</span>
 												</div>
-												<div>
+												<div className="whitespace-nowrap">
 													<span className="text-gray-500">Subscribers: </span>
 													<span className="text-gray-700">
 														{channel.numberOfSubscribers}

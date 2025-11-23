@@ -326,26 +326,23 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 							<div className="grid gap-4">
 								{podcasts.map((podcast) => (
 									<Link
-										className="block transition-transform hover:scale-[1.01]"
+										className="block overflow-hidden transition-transform hover:scale-[1.01]"
 										href={`/${channelIdentifier}/${podcast.id}`}
 										key={podcast.id}
 									>
-										<Card className="hover:border-primary/50 hover:shadow-md">
+										<Card className="overflow-hidden hover:border-primary/50 hover:shadow-md">
 											<CardContent className="p-6">
-												<div className="flex items-start justify-between gap-4">
-													<div>
-														<h3 className="mb-2 font-bold text-gray-900 text-xl">
-															{podcast.title}
-														</h3>
-														<p className="mb-2 line-clamp-2 text-gray-600 text-sm">
-															{podcast.description}
-														</p>
-														{/* We could add a description or date here if available in the data */}
-														<div className="truncate font-mono text-gray-400 text-xs">
-															ID: {podcast.id}
-														</div>
+												<div className="w-full overflow-hidden">
+													<h3 className="mb-2 break-words font-bold text-gray-900 text-xl">
+														{podcast.title}
+													</h3>
+													<p className="mb-2 line-clamp-2 break-words text-gray-600 text-sm">
+														{podcast.description}
+													</p>
+													{/* We could add a description or date here if available in the data */}
+													<div className="truncate font-mono text-gray-400 text-xs">
+														ID: {podcast.id}
 													</div>
-													{/* If podcasts have images, we could add a thumbnail here */}
 												</div>
 											</CardContent>
 										</Card>
