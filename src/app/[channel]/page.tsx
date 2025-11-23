@@ -12,6 +12,8 @@ interface PageProps {
 	}>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function Channel({ params }: PageProps) {
 	const { channel: channelParam } = await params;
 	const suiNsName = await lookupSuinsName(channelParam);
@@ -45,13 +47,18 @@ export default async function Channel({ params }: PageProps) {
 
 	const podcastData = podcasts.value;
 
+	// Sort podcasts by createdAt in descending order (newest first)
+	const sortedPodcasts = podcastData.sort((a, b) => {
+		return Number(b.createdAt) - Number(a.createdAt);
+	});
+
 	// Pass the channelParam (which could be SuiNS name or address) to the view
 	// This is used for constructing proper podcast URLs
 	return (
 		<ChannelPageView
 			channel={channelData}
 			channelIdentifier={channelParam}
-			podcasts={podcastData}
+			podcasts={sortedPodcasts}
 		/>
 	);
 }

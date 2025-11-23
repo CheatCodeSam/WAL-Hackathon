@@ -71,7 +71,7 @@ resource "aws_ecs_task_definition" "fundsui_task" {
         },
         {
           name  = "NEXT_PUBLIC_WALRUS_PUBLISHER"
-          value = "http://walrus-publisher-testnet.cetus.zone:9001"
+          value = "https://publisher.walrus-testnet.walrus.space"
         },
         {
           name  = "NEXT_PUBLIC_SUI_GRAPHQL_URL"

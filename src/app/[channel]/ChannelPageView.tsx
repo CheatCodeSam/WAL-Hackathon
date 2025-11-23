@@ -380,9 +380,7 @@ export function ChannelPageView(props: ChannelPageViewProps) {
 											Subscription Price
 										</span>
 										<p className="font-medium text-gray-900">
-											{status === "not_subscribed"
-												? `${(Number(channel.subscriptionPriceInMist) / 1_000_000_000).toFixed(4)} SUI`
-												: `${channel.subscriptionPriceInMist} MIST`}
+											{`${(Number(channel.subscriptionPriceInMist) / 1_000_000_000).toFixed(4)} SUI`}
 										</p>
 									</div>
 

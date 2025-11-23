@@ -3,6 +3,8 @@ import { env } from "~/env";
 import { getAllChannels } from "~/services/backend/channel/getAllChannels";
 import ExplorePageView from "./ExplorePageView";
 
+export const dynamic = "force-dynamic";
+
 export default async function Explore() {
 	const channels = await getAllChannels(env.NEXT_PUBLIC_CHANNEL_REGISTRY);
 
