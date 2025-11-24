@@ -1,7 +1,8 @@
 <div align="center">
   <img src="public/beaverlogo.png" alt="Fundsui Logo" width="200"/>
-  
-  # Fundsui!
+
+# Fundsui!
+
 </div>
 
 Fundsui is a decentralized creator-subscription platform. fully built using Sui,
@@ -45,6 +46,48 @@ and
 processing Steam transactions in some countries due to content disputes](https://www.ign.com/articles/valve-confirms-paypal-has-stopped-processing-steam-transactions-in-some-countries-as-nsfw-game-row-continues).
 By building on cryptocurrency, Fundsui creators are free from this risk no
 payment processor can censor their content or dictate what they create and sell.
+
+## Project Structure & Short Documentation
+
+```
+contract/                   # Move smart contracts for Sui blockchain
+  sources/                  # Channel, podcast, and seal policy contracts
+
+infra/                      # Terraform configuration for AWS deployment
+
+src/          
+  app/                      # Next.js app router pages
+    [channel]/              # Dynamic channel route
+    [channel]/[podcast]     # Dynamic podcast route
+    dashboard/              # Subscriber dashboard
+    explore/                # Browse channels
+    upload/                 # Podcast upload
+  
+  components/               # shadcn/ui components
+  
+  server/                   # Backend tRPC API
+  
+  services/                 # Business logic layer
+    backend/                # Data fetching (channels, podcasts, subscriptions)
+    walrus-utils.ts         # Walrus storage helpers
+```
+
+## Quick Start
+
+**Development:**
+
+```bash
+pnpm dev              # Start dev server
+pnpm build            # Build application for deployment
+pnpm check            # Lint and format code
+```
+
+**Docker:**
+
+```bash
+just build            # Build Docker image
+just deploy-to-ecr    # Deploy to AWS ECR
+```
 
 ## Where do we go from here?
 
