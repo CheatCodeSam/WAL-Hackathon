@@ -4,6 +4,7 @@ use fundsui::channel::Channel;
 use sui::clock::Clock;
 use sui::coin::{Self, Coin};
 use sui::sui::SUI;
+use usdc::usdc::USDC;
 
 #[error]
 const EPurchasingTooMuchTime: vector<u8> = b"Too much time purchased";
@@ -36,7 +37,7 @@ public struct Subscription has key, store {
 public fun subscribe(
     channel: &Channel,
     frontend_address: address,
-    mut payment: Coin<SUI>,
+    mut payment: Coin<USDC>,
     clock: &Clock,
     ctx: &mut TxContext,
 ): Subscription {
@@ -70,7 +71,7 @@ public fun renew(
     subscription: &mut Subscription,
     channel: &Channel,
     frontend_address: address,
-    mut payment: Coin<SUI>,
+    mut payment: Coin<USDC>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
